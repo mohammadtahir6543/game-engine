@@ -1,0 +1,15 @@
+{
+  "name": "Cloud Engine Pro",
+  "short_name": "ProEngine",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#00adb5",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/686/686589.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
