@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tahir Infinite Engine | Pro Edition</title>
+    <title>Tahir Ultimate Engine v4.0</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -12,190 +14,137 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     
     <style>
-        :root { --main: #00adb5; --dark: #0a0a0a; --glass: rgba(15, 15, 15, 0.95); }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
-        
-        /* Professional Asset Store Sidebar */
-        #asset-store {
-            position: fixed; right: 0; top: 0; width: 320px; height: 100%;
-            background: var(--glass); border-left: 1px solid #333;
+        #asset-sidebar {
+            position: fixed; right: 0; top: 0; width: 300px; height: 100%;
+            background: rgba(10, 10, 10, 0.98); border-left: 1px solid #00adb5;
             display: flex; flex-direction: column; z-index: 100;
         }
-        .store-header { padding: 30px 20px; border-bottom: 1px solid #222; text-align: center; }
-        .store-header h2 { margin: 0; color: var(--main); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; }
-
-        .asset-grid {
-            padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
-            overflow-y: auto; flex-grow: 1;
-        }
-        .asset-card {
-            background: #111; border: 1px solid #222; border-radius: 12px;
-            padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s ease;
-        }
-        .asset-card:hover { border-color: var(--main); background: #1a1a1a; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,173,181,0.2); }
-        .asset-card img { width: 100%; border-radius: 8px; margin-bottom: 10px; opacity: 0.8; }
-        .asset-card:hover img { opacity: 1; }
-        .asset-card span { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #eee; }
-
-        /* HUD & Controls */
-        #hud {
-            position: fixed; left: 25px; top: 25px; width: 240px;
-            background: var(--glass); padding: 25px; border-radius: 15px;
-            border: 1px solid #333; z-index: 90;
-        }
-        .btn-pro {
-            width: 100%; padding: 14px; margin-top: 12px; cursor: pointer;
-            background: transparent; border: 1px solid var(--main); color: white;
-            border-radius: 8px; font-weight: bold; font-size: 11px; letter-spacing: 1px;
-            transition: 0.3s; text-transform: uppercase;
-        }
-        .btn-pro:hover { background: var(--main); color: black; box-shadow: 0 0 20px rgba(0,173,181,0.4); }
+        .header { padding: 20px; border-bottom: 1px solid #222; text-align: center; color: #00adb5; letter-spacing: 2px; font-weight: bold; }
+        .grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; }
+        .card { background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid #333; }
+        .card:hover { border-color: #00adb5; background: #222; }
+        .card img { width: 100%; border-radius: 4px; margin-bottom: 5px; background: #000; }
+        .card span { font-size: 11px; font-weight: bold; }
         
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; display: flex; align-items: center; justify-content: center;
-            z-index: 2000; font-weight: bold; letter-spacing: 5px; color: var(--main);
-        }
+        #tools { position: fixed; left: 20px; top: 20px; z-index: 90; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        button { width: 100%; padding: 10px; margin-bottom: 8px; cursor: pointer; background: #111; border: 1px solid #00adb5; color: white; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        button:hover { background: #00adb5; color: black; }
+        #status { position: fixed; top: 50%; left: 45%; transform: translate(-50%, -50%); display: none; color: #00adb5; font-size: 20px; font-weight: bold; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">ENGINE INITIALIZING...</div>
+    <div id="status">IMPORTING ASSET... 📥</div>
 
-    <div id="hud">
-        <h3 style="margin:0; color:var(--main); font-size:12px; letter-spacing:2px;">CORE INTERFACE v3.0</h3>
-        <button class="btn-pro" style="background:#28a745; border:none;" onclick="saveProject()">Cloud Save ☁️</button>
-        <button class="btn-pro" onclick="setMode('translate')">Move Tool</button>
-        <button class="btn-pro" onclick="setMode('rotate')">Rotate Tool</button>
-        <button class="btn-pro" onclick="setMode('scale')">Scale Tool</button>
-        <p style="font-size:10px; color:#555; margin-top:20px; line-height:1.5;">
-            SELECT OBJECT TO MODIFY<br>MOUSE DRAG TO MOVE<br>W,A,S,D TO FLY
-        </p>
+    <div id="tools">
+        <h3 style="margin:0 0 10px 0; font-size:12px; color:#00adb5;">EDITOR TOOLS</h3>
+        <button onclick="control.setMode('translate')">MOVE (W)</button>
+        <button onclick="control.setMode('rotate')">ROTATE (E)</button>
+        <button onclick="control.setMode('scale')">SCALE (R)</button>
+        <button style="background:#28a745; border:none;" onclick="save()">CLOUD SAVE ☁️</button>
     </div>
 
-    <div id="asset-store">
-        <div class="store-header"><h2>Asset Library</h2></div>
-        <div class="asset-grid">
-            <div class="asset-card" onclick="spawn('helmet')">
+    <div id="asset-sidebar">
+        <div class="header">ASSET STORE</div>
+        <div class="grid">
+            <div class="card" onclick="spawn('helmet')">
                 <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png">
-                <span>SC-FI HELMET</span>
+                <span>HELMET</span>
             </div>
-            <div class="asset-card" onclick="spawn('duck')">
+            <div class="card" onclick="spawn('duck')">
                 <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png">
-                <span>RUBBER DUCK</span>
+                <span>DUCK</span>
             </div>
-            <div class="asset-card" onclick="spawn('robot')">
+            <div class="card" onclick="spawn('robot')">
                 <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/screenshot/screenshot.png">
-                <span>BOT ENGINE</span>
+                <span>ROBOT</span>
             </div>
-            <div class="asset-card" onclick="spawn('box')">
-                <div style="width:100%; height:70px; background:linear-gradient(45deg, #00adb5, #005f63); border-radius:8px; margin-bottom:10px;"></div>
-                <span>DEV CUBE</span>
+            <div class="card" onclick="spawn('box')">
+                <div style="height:60px; background:#00adb5; border-radius:4px; margin-bottom:5px;"></div>
+                <span>CUBE</span>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. ENGINE ENGINE CORE ---
+        // 1. Scene Setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x020202);
-        
-        const camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 320) / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-        renderer.setSize(window.innerWidth - 320, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        scene.background = new THREE.Color(0x050505);
+        const camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 300) / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth - 300, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
         document.body.appendChild(renderer.domElement);
 
-        // Grid Terrain
-        const grid = new THREE.GridHelper(100, 50, 0x00adb5, 0x111111);
-        scene.add(grid);
+        // Grid & Lights
+        scene.add(new THREE.GridHelper(50, 50, 0x00adb5, 0x222222));
+        const light = new THREE.DirectionalLight(0xffffff, 2);
+        light.position.set(5, 10, 5);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-        // Cinematic Lighting
-        const light1 = new THREE.DirectionalLight(0xffffff, 1.5);
-        light1.position.set(10, 10, 10);
-        scene.add(light1);
-        const light2 = new THREE.AmbientLight(0xffffff, 0.4);
-        scene.add(light2);
-
-        camera.position.set(0, 5, 12);
+        camera.position.set(0, 5, 10);
         camera.lookAt(0, 0, 0);
 
-        // --- 2. GIZMO CONTROLS (THE "WOW" FACTOR) ---
-        const transformControl = new THREE.TransformControls(camera, renderer.domElement);
-        scene.add(transformControl);
+        // 2. Transform Controls
+        const control = new THREE.TransformControls(camera, renderer.domElement);
+        scene.add(control);
 
-        function setMode(mode) { transformControl.setMode(mode); }
-
-        let currentAsset;
+        let currentObj;
         const loader = new THREE.GLTFLoader();
 
-        const assets = {
+        const lib = {
             helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
             duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf',
             robot: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/glTF/BrainStem.gltf'
         };
 
-        function spawn(name) {
-            document.getElementById('loading-screen').style.display = 'flex';
-            if(currentAsset) scene.remove(currentAsset);
+        function spawn(id) {
+            if(currentObj) scene.remove(currentObj);
+            document.getElementById('status').style.display = 'block';
 
-            if(name === 'box') {
+            if(id === 'box') {
                 const geo = new THREE.BoxGeometry(2, 2, 2);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.8, roughness: 0.2 });
-                currentAsset = new THREE.Mesh(geo, mat);
-                currentAsset.position.y = 1;
-                scene.add(currentAsset);
-                transformControl.attach(currentAsset);
-                document.getElementById('loading-screen').style.display = 'none';
+                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.5, roughness: 0.1 });
+                currentObj = new THREE.Mesh(geo, mat);
+                currentObj.position.y = 1;
+                scene.add(currentObj);
+                control.attach(currentObj);
+                document.getElementById('status').style.display = 'none';
             } else {
-                loader.load(assets[name], (gltf) => {
-                    currentAsset = gltf.scene;
-                    currentAsset.scale.set(2, 2, 2);
-                    currentAsset.position.y = 1;
-                    scene.add(currentAsset);
-                    transformControl.attach(currentAsset);
-                    document.getElementById('loading-screen').style.display = 'none';
+                // Versioning added to URL to kill cache
+                loader.load(lib[id] + "?v=" + Math.random(), (gltf) => {
+                    currentObj = gltf.scene;
+                    currentObj.scale.set(2, 2, 2);
+                    currentObj.position.y = 1;
+                    scene.add(currentObj);
+                    control.attach(currentObj);
+                    document.getElementById('status').style.display = 'none';
                 });
             }
         }
 
-        // --- 3. RENDERING & WINDOW ---
+        // Start with Box
+        spawn('box');
+
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
         animate();
 
-        window.onload = () => {
-            document.getElementById('loading-screen').style.display = 'none';
-            spawn('helmet');
-        };
-
-        // Keyboard Movement (Camera)
-        window.addEventListener('keydown', (e) => {
-            const s = 0.5;
-            if(e.key.toLowerCase() === 'w') camera.position.z -= s;
-            if(e.key.toLowerCase() === 's') camera.position.z += s;
-            if(e.key.toLowerCase() === 'a') camera.position.x -= s;
-            if(e.key.toLowerCase() === 'd') camera.position.x += s;
-        });
-
-        // --- 4. SUPABASE CLOUD ---
-        const _supabase = supabase.createClient("https://fhqmmfhieowoplsiuiah.supabase.co", "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR68d0qoLwQyH6g_jIuzR");
-        
-        async function saveProject() {
-            if(!currentAsset) return;
-            const { error } = await _supabase.from('user_games').insert([{ 
-                game_state: { x: currentAsset.position.x, y: currentAsset.position.y, z: currentAsset.position.z, rot: currentAsset.rotation.y } 
-            }]);
-            alert(error ? "Sync Error!" : "Neural Save Complete! 🚀");
+        // Supabase
+        const _sb = supabase.createClient("https://fhqmmfhieowoplsiuiah.supabase.co", "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR68d0qoLwQyH6g_jIuzR");
+        async function save() {
+            if(!currentObj) return;
+            const { error } = await _sb.from('user_games').insert([{ game_state: {x: currentObj.position.x, y: currentObj.position.y, z: currentObj.position.z} }]);
+            alert(error ? "Error!" : "Engine Data Saved! ☁️");
         }
 
         window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth - 320, window.innerHeight);
-            camera.aspect = (window.innerWidth - 320) / window.innerHeight;
+            renderer.setSize(window.innerWidth - 300, window.innerHeight);
+            camera.aspect = (window.innerWidth - 300) / window.innerHeight;
             camera.updateProjectionMatrix();
         });
     </script>
