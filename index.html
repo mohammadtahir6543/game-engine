@@ -4,195 +4,193 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULTRA ENGINE | CINEMATIC EDITION</title>
+    <title>ULTRA ENGINE | SCRIPTING & VISUAL</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --accent: #00f2ff; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; }
+        :root { --accent: #00f2ff; --bg: #050505; --editor: #0d0d0d; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: white; }
 
-        /* --- 1. CINEMATIC VIDEO INTRO --- */
-        #video-container {
+        /* --- SETUP SCREEN --- */
+        #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10000; background: #000; display: flex; align-items: center; justify-content: center;
         }
-        video { width: 100%; height: 100%; object-fit: cover; }
+        .setup-card {
+            background: rgba(10, 10, 10, 0.95); padding: 40px; border: 1px solid var(--accent);
+            width: 380px; text-align: center; box-shadow: 0 0 50px rgba(0,242,255,0.1);
+        }
+        select, .btn-prime {
+            width: 100%; padding: 12px; margin-top: 15px; background: #000; border: 1px solid #333;
+            color: white; font-family: 'Orbitron'; font-size: 10px; cursor: pointer;
+        }
+        .btn-prime { background: var(--accent); color: black; font-weight: 900; border: none; }
+
+        /* --- ENGINE LAYOUT --- */
+        #engine-interface { display: none; width: 100%; height: 100%; }
         
-        #overlay-text {
-            position: absolute; color: white; font-family: 'Syncopate';
-            font-size: 4vw; letter-spacing: 20px; opacity: 0; z-index: 10001;
-            text-shadow: 0 0 30px var(--accent); pointer-events: none;
+        /* SCRIPTING EDITOR (Left) */
+        #code-editor-container {
+            position: fixed; left: 0; top: 0; width: 350px; height: 100%;
+            background: var(--editor); border-right: 1px solid #222; z-index: 90;
+            display: none; flex-direction: column;
+        }
+        .editor-header { padding: 15px; background: #151515; font-size: 10px; color: var(--accent); border-bottom: 1px solid #222; }
+        textarea {
+            flex-grow: 1; background: transparent; border: none; color: #00ff00;
+            padding: 20px; font-family: 'Fira Code', monospace; font-size: 12px; outline: none; resize: none;
         }
 
-        /* --- 2. SETUP SCREEN --- */
-        #setup-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #0a0a0a 0%, #000 100%);
-            z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 1.5s;
+        /* ASSET SIDEBAR (Right) */
+        #asset-sidebar {
+            position: fixed; right: 0; top: 0; width: 280px; height: 100%;
+            background: #080808; border-left: 1px solid #222; z-index: 90; display: flex; flex-direction: column;
         }
-        .setup-box {
-            background: rgba(15,15,15,0.95); padding: 50px; border: 1px solid var(--accent);
-            text-align: center; width: 400px; box-shadow: 0 0 50px rgba(0,242,255,0.2);
-        }
-        select, .btn-start {
-            width: 100%; padding: 15px; margin-top: 20px; background: #111;
-            border: 1px solid #333; color: white; font-family: 'Orbitron'; cursor: pointer;
-        }
-        .btn-start { background: var(--accent); color: #000; font-weight: 900; border: none; transition: 0.3s; }
-        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
+        .asset-grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; }
+        .asset-item { background: #111; border: 1px solid #222; padding: 10px; text-align: center; cursor: pointer; border-radius: 4px; }
+        .asset-item:hover { border-color: var(--accent); }
+        .asset-item img { width: 100%; border-radius: 2px; }
 
-        /* --- 3. ENGINE UI --- */
-        #engine-ui { display: none; }
-        #sidebar {
-            position: fixed; right: 0; top: 0; width: 320px; height: 100%;
-            background: #080808; border-left: 1px solid #222; z-index: 100;
-        }
-        .market-card {
-            margin: 20px; padding: 20px; border: 1px solid var(--accent);
-            background: rgba(0,242,255,0.05); text-align: center;
-        }
-        #hud { position: fixed; left: 20px; top: 20px; z-index: 50; background: rgba(0,0,0,0.8); padding: 20px; border: 1px solid #333; }
+        #viewport-container { margin-left: 0; margin-right: 280px; height: 100%; transition: 0.3s; }
+        #hud { position: fixed; left: 370px; top: 20px; z-index: 80; display: flex; gap: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="video-container">
-        <video id="intro-video" muted playsinline>
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-blue-circuit-board-9755-large.mp4" type="video/mp4">
-        </video>
-        <div id="overlay-text">ULTRA ENGINE</div>
-    </div>
-
-    <div id="setup-screen">
-        <div class="setup-box">
-            <h2 style="color:var(--accent); letter-spacing:5px;">PROJECT SETUP</h2>
-            <p style="font-size:10px; color:#666;">SELECT YOUR TARGET ENVIRONMENT</p>
-            
-            <select id="platform">
-                <option value="pc">PC / HIGH PERFORMANCE</option>
-                <option value="mobile">MOBILE / OPTIMIZED</option>
+    <div id="boot-screen">
+        <div class="setup-card">
+            <h2 style="color:var(--accent); letter-spacing:3px;">ULTRA ENGINE</h2>
+            <select id="platform"><option value="pc">PC / HIGH END</option><option value="mobile">MOBILE / WEB</option></select>
+            <select id="mode-select">
+                <option value="nocode">NO-CODE (VISUAL)</option>
+                <option value="script">SCRIPTING (CODER)</option>
             </select>
-            
-            <select id="mode">
-                <option value="nocode">NO-CODE VISUAL EDITOR</option>
-                <option value="script">DEVELOPER SCRIPTING</option>
-            </select>
-            
-            <button class="btn-start" onclick="launchEngine()">START BUILDING</button>
+            <button class="btn-prime" onclick="initEngine()">INITIALIZE PROJECT</button>
         </div>
     </div>
 
-    <div id="engine-ui">
+    <div id="engine-interface">
+        <div id="code-editor-container">
+            <div class="editor-header">SCRIPT_EDITOR.JS</div>
+            <textarea id="code-input" spellcheck="false">// Write logic here
+function update() {
+    if(model) {
+        model.rotation.y += 0.01;
+    }
+}
+            </textarea>
+            <button class="btn-prime" onclick="runScript()" style="margin: 10px;">RUN SCRIPT ▶</button>
+        </div>
+
         <div id="hud">
-            <h4 style="margin:0; color:var(--accent);">ULTRA CORE ACTIVE</h4>
-            <button onclick="control.setMode('translate')" style="width:100%; margin-top:10px; background:none; border:1px solid #444; color:white; padding:5px; cursor:pointer;">MOVE</button>
-            <button onclick="control.setMode('rotate')" style="width:100%; margin-top:5px; background:none; border:1px solid #444; color:white; padding:5px; cursor:pointer;">ROTATE</button>
-            <button onclick="save()" style="width:100%; margin-top:20px; background:#28a745; border:none; padding:10px; font-weight:bold; cursor:pointer;">SAVE PROJECT</button>
+            <button class="btn-prime" onclick="control.setMode('translate')" style="padding: 10px 20px;">MOVE</button>
+            <button class="btn-prime" onclick="control.setMode('rotate')" style="padding: 10px 20px;">ROTATE</button>
         </div>
 
-        <div id="sidebar">
-            <div class="market-card">
-                <h3 style="font-size:14px; color:var(--accent); margin:0;">ASSET MARKET</h3>
-                <p style="font-size:9px; color:#777; margin:10px 0;">External Library with 10k+ Assets</p>
-                <a href="https://github.com/KhronosGroup/glTF-Sample-Models" target="_blank" style="text-decoration:none; color:#000; background:var(--accent); padding:8px 15px; font-size:10px; font-weight:bold; display:inline-block; border-radius:3px;">VISIT MARKET ↗</a>
-            </div>
-            <div style="padding:20px;">
-                <p style="font-size:10px; color:#444;">QUICK SPAWN</p>
-                <button onclick="spawn('helmet')" style="width:100%; padding:10px; background:#111; border:1px solid #333; color:white; cursor:pointer; text-align:left;">SC-FI HELMET</button>
+        <div id="asset-sidebar">
+            <div style="padding: 20px; font-size: 12px; color: var(--accent);">ASSET LIBRARY</div>
+            <div class="asset-grid">
+                <div class="asset-item" onclick="spawn('helmet')">
+                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png">
+                    <span>HELMET</span>
+                </div>
+                <div class="asset-item" onclick="spawn('duck')">
+                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png">
+                    <span>DUCK</span>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const video = document.getElementById('intro-video');
-        const text = document.getElementById('overlay-text');
-        const videoCont = document.getElementById('video-container');
-        const setup = document.getElementById('setup-screen');
-
-        // Cinematic Sequence
-        window.onclick = () => { 
-            video.play(); // User interaction needed for video play
-            setTimeout(() => {
-                text.style.transition = "2s";
-                text.style.opacity = "1";
-            }, 1000);
-            
-            setTimeout(() => {
-                videoCont.style.transition = "2s";
-                videoCont.style.opacity = "0";
-                setTimeout(() => {
-                    videoCont.style.display = "none";
-                    setup.style.display = "flex";
-                    setTimeout(() => { setup.style.opacity = "1"; }, 100);
-                }, 2000);
-            }, 5000);
-        };
-
-        function launchEngine() {
-            setup.style.opacity = "0";
-            setTimeout(() => {
-                setup.style.display = "none";
-                document.getElementById('engine-ui').style.display = "block";
-                initEngine();
-            }, 1500);
-        }
-
-        let scene, camera, renderer, control, currentObj;
+        let scene, camera, renderer, control, model, engineMode;
+        let scriptRunning = false;
 
         function initEngine() {
+            engineMode = document.getElementById('mode-select').value;
+            document.getElementById('boot-screen').style.display = 'none';
+            document.getElementById('engine-interface').style.display = 'block';
+            
+            if(engineMode === 'script') {
+                document.getElementById('code-editor-container').style.display = 'flex';
+                document.getElementById('hud').style.left = '370px';
+            } else {
+                document.getElementById('hud').style.left = '20px';
+            }
+
+            start3D();
+        }
+
+        function start3D() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x020202);
-            camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 320) / window.innerHeight, 0.1, 1000);
+            
+            const viewWidth = window.innerWidth - (engineMode === 'script' ? 350 : 0) - 280;
+            camera = new THREE.PerspectiveCamera(75, viewWidth / window.innerHeight, 0.1, 1000);
+            
             renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth - 320, window.innerHeight);
+            renderer.setSize(viewWidth, window.innerHeight);
             renderer.outputEncoding = THREE.sRGBEncoding;
             document.body.appendChild(renderer.domElement);
+            renderer.domElement.style.marginLeft = engineMode === 'script' ? "350px" : "0px";
 
             scene.add(new THREE.GridHelper(50, 50, 0x00f2ff, 0x111111));
-            const light = new THREE.DirectionalLight(0xffffff, 2);
-            light.position.set(5, 10, 5);
-            scene.add(light);
             scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+            sun.position.set(5, 10, 5);
+            scene.add(sun);
 
-            camera.position.set(0, 5, 12);
-            camera.lookAt(0, 0, 0);
-
+            camera.position.set(0, 5, 10);
             control = new THREE.TransformControls(camera, renderer.domElement);
             scene.add(control);
 
             animate();
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            if(renderer) renderer.render(scene, camera);
-        }
-
-        const loader = new THREE.GLTFLoader();
-        function spawn(id) {
-            if(currentObj) scene.remove(currentObj);
-            loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf', (gltf) => {
-                currentObj = gltf.scene;
-                currentObj.scale.set(2.5, 2.5, 2.5);
-                scene.add(currentObj);
-                control.attach(currentObj);
+        function spawn(type) {
+            const loader = new THREE.GLTFLoader();
+            if(model) scene.remove(model);
+            const url = type === 'helmet' ? 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf' : 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf';
+            
+            loader.load(url, (gltf) => {
+                model = gltf.scene;
+                model.scale.set(2, 2, 2);
+                scene.add(model);
+                control.attach(model);
             });
         }
 
-        async function save() { alert("Data Synced to Ultra Cloud!"); }
+        // --- SCRIPTING LOGIC ---
+        function runScript() {
+            scriptRunning = true;
+            const userCode = document.getElementById('code-input').value;
+            try {
+                // Creates a dynamic function from textarea
+                window.userUpdate = new Function('model', userCode + '\n if(typeof update === "function") update();');
+                alert("Script Compiled Successfully! 🚀");
+            } catch(e) {
+                alert("Script Error: " + e.message);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(scriptRunning && window.userUpdate && model) {
+                window.userUpdate(model);
+            }
+            if(renderer) renderer.render(scene, camera);
+        }
 
         window.addEventListener('resize', () => {
-            if(renderer) {
-                renderer.setSize(window.innerWidth - 320, window.innerHeight);
-                camera.aspect = (window.innerWidth - 320) / window.innerHeight;
-                camera.updateProjectionMatrix();
-            }
+            const viewWidth = window.innerWidth - (engineMode === 'script' ? 350 : 0) - 280;
+            renderer.setSize(viewWidth, window.innerHeight);
+            camera.aspect = viewWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
         });
     </script>
 </body>
