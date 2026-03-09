@@ -8,59 +8,52 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #050505; color: white; font-family: 'Segoe UI', sans-serif; }
-        #ui { position: fixed; top: 10px; left: 10px; z-index: 10; display: flex; flex-direction: column; gap: 10px; width: 220px; background: rgba(15,15,15,0.95); padding: 20px; border-radius: 12px; border: 1.5px solid #00adb5; box-shadow: 0 0 20px rgba(0,173,181,0.3); }
-        h3 { margin: 0 0 10px 0; color: #00adb5; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
-        select, button { padding: 12px; cursor: pointer; background: #222; border: 1px solid #444; color: white; border-radius: 6px; font-weight: bold; transition: 0.3s; width: 100%; }
+        body { margin: 0; overflow: hidden; background: #0a0a0a; color: white; font-family: sans-serif; }
+        #ui { position: fixed; top: 10px; left: 10px; z-index: 10; display: flex; flex-direction: column; gap: 10px; width: 200px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; border: 1px solid #00adb5; }
+        select, button { padding: 10px; cursor: pointer; background: #222; border: 1px solid #444; color: white; border-radius: 5px; font-weight: bold; width: 100%; }
         button:hover { background: #00adb5; color: black; }
-        .save-btn { background: #28a745 !important; border: none; margin-top: 10px; }
-        #status { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid #00adb5; font-size: 14px; }
-        #loader-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #00adb5; color: black; padding: 10px 20px; border-radius: 5px; font-weight: bold; z-index: 100; }
+        .save-btn { background: #28a745 !important; border: none; }
+        #loader-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #00adb5; color: black; padding: 15px; border-radius: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="loader-ui">Loading Real Asset... 📦</div>
+    <div id="loader-ui">Model Load Ho Raha Hai... 📦</div>
 
     <div id="ui">
-        <h3>Asset Library</h3>
+        <h3 style="color:#00adb5; margin-top:0;">ASSET LIBRARY</h3>
         <select id="assetSelect">
             <option value="box">Simple 3D Box</option>
-            <option value="helmet">Realistic Helmet (Sci-Fi)</option>
-            <option value="duck">Rubber Duck (Real Texture)</option>
+            <option value="helmet">Realistic Helmet</option>
+            <option value="duck">Rubber Duck</option>
         </select>
         <button onclick="loadSelectedAsset()">Spawn Asset</button>
-        
-        <h3 style="margin-top:15px;">Settings</h3>
-        <button onclick="toggleGraphics()">Ultra Graphics: <span id="gfx-stat">OFF</span></button>
+        <hr style="width:100%; border:0.5px solid #333;">
         <button onclick="toggleLogic()">Auto-Rotate: <span id="logic-stat">OFF</span></button>
-        
         <button class="save-btn" onclick="saveToCloud()">Cloud Save (Supabase)</button>
     </div>
 
-    <div id="status">W,A,S,D to Move | Engine Live 🚀</div>
-
     <script>
-        // 1. ENGINE CORE SETUP
         const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.outputEncoding = THREE.sRGBEncoding;
         document.body.appendChild(renderer.domElement);
-        camera.position.set(0, 2, 5);
 
-        // Lighting
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        mainLight.position.set(5, 10, 7);
-        scene.add(mainLight);
-        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-        scene.add(ambient);
+        // ZABARDAST LIGHTING (Ab kaala nahi dikhega)
+        const light1 = new THREE.DirectionalLight(0xffffff, 2);
+        light1.position.set(2, 5, 5);
+        scene.add(light1);
+        const light2 = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(light2);
 
-        let currentModel, isLogicOn = false, isGfxOn = false;
+        camera.position.set(0, 1, 4);
+
+        let currentModel, isLogicOn = false;
         const loader = new THREE.GLTFLoader();
 
-        // 2. ASSET LOADING SYSTEM
         const assetLinks = {
             helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
             duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf'
@@ -72,7 +65,7 @@
             
             if(type === 'box') {
                 const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.6, roughness: 0.2 });
+                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.5, roughness: 0.2 });
                 currentModel = new THREE.Mesh(geo, mat);
                 scene.add(currentModel);
             } else {
@@ -85,9 +78,40 @@
                 });
             }
         }
-        loadSelectedAsset(); // Load default on start
+        loadSelectedAsset(); 
 
-        // 3. FEATURES
-        function toggleGraphics() {
-            isGfxOn = !isGfxOn;
-            renderer.toneMapping = isGfxOn ? THREE.ReinhardToneMapping : THREE.
+        function toggleLogic() {
+            isLogicOn = !isLogicOn;
+            document.getElementById('logic-stat').innerText = isLogicOn ? "ON" : "OFF";
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if(!currentModel) return;
+            const s = 0.2;
+            if(e.key.toLowerCase() === 'w') currentModel.position.z -= s;
+            if(e.key.toLowerCase() === 's') currentModel.position.z += s;
+            if(e.key.toLowerCase() === 'a') currentModel.position.x -= s;
+            if(e.key.toLowerCase() === 'd') currentModel.position.x += s;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(currentModel && isLogicOn) currentModel.rotation.y += 0.02;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // SUPABASE KEYS (Fixed)
+        const SUPABASE_URL = "https://fhqmmfhieowoplsiuiah.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR68d0qoLwQyH6g_jIuzR"; 
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function saveToCloud() {
+            if(!currentModel) return;
+            const { error } = await _supabase.from('user_games').insert([{ game_state: {x: currentModel.position.x, z: currentModel.position.z} }]);
+            if (error) alert("Error: " + error.message);
+            else alert("Cloud Saved! ☁️");
+        }
+    </script>
+</body>
+</html>
