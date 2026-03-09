@@ -3,111 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Engine Pro</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Tahir's Final Cloud Engine</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
-        #ui-panel {
-            position: fixed; left: 0; top: 0; width: 200px; height: 100%;
-            background: rgba(20, 20, 20, 0.9); border-right: 2px solid #00adb5;
-            display: flex; flex-direction: column; padding: 20px; z-index: 10;
-        }
-        h2 { color: #00adb5; font-size: 18px; margin-bottom: 20px; }
-        button {
-            background: #222; color: #fff; border: 1px solid #444;
-            padding: 12px; margin-bottom: 10px; cursor: pointer; border-radius: 5px;
-            transition: 0.3s; font-weight: bold;
-        }
-        button:hover { background: #00adb5; color: #000; }
-        .save-btn { background: #28a745; border: none; margin-top: auto; }
-        #instructions {
-            position: fixed; bottom: 20px; right: 20px; color: #fff;
-            background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;
-        }
+        body { margin: 0; overflow: hidden; background: #050505; color: white; font-family: 'Segoe UI', sans-serif; }
+        #ui { position: fixed; top: 10px; left: 10px; z-index: 10; display: flex; flex-direction: column; gap: 10px; width: 220px; background: rgba(15,15,15,0.95); padding: 20px; border-radius: 12px; border: 1.5px solid #00adb5; box-shadow: 0 0 20px rgba(0,173,181,0.3); }
+        h3 { margin: 0 0 10px 0; color: #00adb5; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+        select, button { padding: 12px; cursor: pointer; background: #222; border: 1px solid #444; color: white; border-radius: 6px; font-weight: bold; transition: 0.3s; width: 100%; }
+        button:hover { background: #00adb5; color: black; }
+        .save-btn { background: #28a745 !important; border: none; margin-top: 10px; }
+        #status { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid #00adb5; font-size: 14px; }
+        #loader-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #00adb5; color: black; padding: 10px 20px; border-radius: 5px; font-weight: bold; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <div id="ui-panel">
-        <h2>ENGINE PANEL</h2>
-        <button onclick="addBox()">+ Add 3D Object</button>
-        <button onclick="alert('Templates coming soon!')">Realistic Templates</button>
-        <button onclick="alert('Logic Editor Loading...')">No-Code Logic</button>
+    <div id="loader-ui">Loading Real Asset... 📦</div>
+
+    <div id="ui">
+        <h3>Asset Library</h3>
+        <select id="assetSelect">
+            <option value="box">Simple 3D Box</option>
+            <option value="helmet">Realistic Helmet (Sci-Fi)</option>
+            <option value="duck">Rubber Duck (Real Texture)</option>
+        </select>
+        <button onclick="loadSelectedAsset()">Spawn Asset</button>
+        
+        <h3 style="margin-top:15px;">Settings</h3>
+        <button onclick="toggleGraphics()">Ultra Graphics: <span id="gfx-stat">OFF</span></button>
+        <button onclick="toggleLogic()">Auto-Rotate: <span id="logic-stat">OFF</span></button>
+        
         <button class="save-btn" onclick="saveToCloud()">Cloud Save (Supabase)</button>
     </div>
 
-    <div id="instructions">Use <b>W, A, S, D</b> to Move Box</div>
+    <div id="status">W,A,S,D to Move | Engine Live 🚀</div>
 
     <script>
-        // 1. THREE.JS SETUP
+        // 1. ENGINE CORE SETUP
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
+        camera.position.set(0, 2, 5);
 
-        const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(10, 10, 10);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
+        // Lighting
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        mainLight.position.set(5, 10, 7);
+        scene.add(mainLight);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambient);
 
-        camera.position.z = 5;
+        let currentModel, isLogicOn = false, isGfxOn = false;
+        const loader = new THREE.GLTFLoader();
 
-        let mesh; 
-        function addBox() {
-            if(mesh) scene.remove(mesh);
-            const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const material = new THREE.MeshStandardMaterial({ color: 0x00adb5 });
-            mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
-        }
-        addBox();
+        // 2. ASSET LOADING SYSTEM
+        const assetLinks = {
+            helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
+            duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf'
+        };
 
-        // 2. SUPABASE SETUP (MAINE AAPKI KEY DAAL DI HAI)
-        const SUPABASE_URL = "https://fhqmmfhieowoplsiuiah.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR..."; // I have used your key from screenshot
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        async function saveToCloud() {
-            if(!mesh) return alert("Add a box first!");
-            const pos = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
+        async function loadSelectedAsset() {
+            const type = document.getElementById('assetSelect').value;
+            if(currentModel) scene.remove(currentModel);
             
-            const { data, error } = await _supabase
-                .from('user_games')
-                .insert([{ game_state: pos }]);
-
-            if (error) alert("Error: " + error.message);
-            else alert("Game Saved to Cloud! ☁️");
-        }
-
-        // 3. MOVEMENT CONTROLS
-        window.addEventListener('keydown', (e) => {
-            if(!mesh) return;
-            const speed = 0.2;
-            if(e.key.toLowerCase() === 'w') mesh.position.y += speed;
-            if(e.key.toLowerCase() === 's') mesh.position.y -= speed;
-            if(e.key.toLowerCase() === 'a') mesh.position.x -= speed;
-            if(e.key.toLowerCase() === 'd') mesh.position.x += speed;
-        });
-
-        // 4. ANIMATION LOOP
-        function animate() {
-            requestAnimationFrame(animate);
-            if(mesh) {
-                mesh.rotation.x += 0.01;
-                mesh.rotation.y += 0.01;
+            if(type === 'box') {
+                const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.6, roughness: 0.2 });
+                currentModel = new THREE.Mesh(geo, mat);
+                scene.add(currentModel);
+            } else {
+                document.getElementById('loader-ui').style.display = 'block';
+                loader.load(assetLinks[type], (gltf) => {
+                    currentModel = gltf.scene;
+                    currentModel.scale.set(1.5, 1.5, 1.5);
+                    scene.add(currentModel);
+                    document.getElementById('loader-ui').style.display = 'none';
+                });
             }
-            renderer.render(scene, camera);
         }
-        animate();
+        loadSelectedAsset(); // Load default on start
 
-        window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        });
-    </script>
-</body>
-</html>
+        // 3. FEATURES
+        function toggleGraphics() {
+            isGfxOn = !isGfxOn;
+            renderer.toneMapping = isGfxOn ? THREE.ReinhardToneMapping : THREE.
