@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tahir Ultimate Engine v4.0</title>
+    <title>TAHIR INFINITE | THE NEXT GEN ENGINE</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -14,139 +12,28 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
-        #asset-sidebar {
-            position: fixed; right: 0; top: 0; width: 300px; height: 100%;
-            background: rgba(10, 10, 10, 0.98); border-left: 1px solid #00adb5;
-            display: flex; flex-direction: column; z-index: 100;
+        :root { --accent: #00adb5; --dark: #050505; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: white; }
+
+        /* --- THE TAGDA INTRO CSS --- */
+        #intro-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 5000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; transition: 1.5s ease-in-out;
         }
-        .header { padding: 20px; border-bottom: 1px solid #222; text-align: center; color: #00adb5; letter-spacing: 2px; font-weight: bold; }
-        .grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; }
-        .card { background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid #333; }
-        .card:hover { border-color: #00adb5; background: #222; }
-        .card img { width: 100%; border-radius: 4px; margin-bottom: 5px; background: #000; }
-        .card span { font-size: 11px; font-weight: bold; }
+        .logo-text {
+            font-size: 50px; font-weight: 900; letter-spacing: 15px;
+            color: var(--accent); text-shadow: 0 0 20px var(--accent);
+            animation: glitch 2s infinite;
+        }
+        .sub-text { font-size: 12px; letter-spacing: 5px; color: #555; margin-top: 10px; text-transform: uppercase; }
         
-        #tools { position: fixed; left: 20px; top: 20px; z-index: 90; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; border: 1px solid #333; }
-        button { width: 100%; padding: 10px; margin-bottom: 8px; cursor: pointer; background: #111; border: 1px solid #00adb5; color: white; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        button:hover { background: #00adb5; color: black; }
-        #status { position: fixed; top: 50%; left: 45%; transform: translate(-50%, -50%); display: none; color: #00adb5; font-size: 20px; font-weight: bold; z-index: 1000; }
-    </style>
-</head>
-<body>
-
-    <div id="status">IMPORTING ASSET... 📥</div>
-
-    <div id="tools">
-        <h3 style="margin:0 0 10px 0; font-size:12px; color:#00adb5;">EDITOR TOOLS</h3>
-        <button onclick="control.setMode('translate')">MOVE (W)</button>
-        <button onclick="control.setMode('rotate')">ROTATE (E)</button>
-        <button onclick="control.setMode('scale')">SCALE (R)</button>
-        <button style="background:#28a745; border:none;" onclick="save()">CLOUD SAVE ☁️</button>
-    </div>
-
-    <div id="asset-sidebar">
-        <div class="header">ASSET STORE</div>
-        <div class="grid">
-            <div class="card" onclick="spawn('helmet')">
-                <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png">
-                <span>HELMET</span>
-            </div>
-            <div class="card" onclick="spawn('duck')">
-                <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png">
-                <span>DUCK</span>
-            </div>
-            <div class="card" onclick="spawn('robot')">
-                <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/screenshot/screenshot.png">
-                <span>ROBOT</span>
-            </div>
-            <div class="card" onclick="spawn('box')">
-                <div style="height:60px; background:#00adb5; border-radius:4px; margin-bottom:5px;"></div>
-                <span>CUBE</span>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 1. Scene Setup
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050505);
-        const camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 300) / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth - 300, window.innerHeight);
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        document.body.appendChild(renderer.domElement);
-
-        // Grid & Lights
-        scene.add(new THREE.GridHelper(50, 50, 0x00adb5, 0x222222));
-        const light = new THREE.DirectionalLight(0xffffff, 2);
-        light.position.set(5, 10, 5);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-
-        camera.position.set(0, 5, 10);
-        camera.lookAt(0, 0, 0);
-
-        // 2. Transform Controls
-        const control = new THREE.TransformControls(camera, renderer.domElement);
-        scene.add(control);
-
-        let currentObj;
-        const loader = new THREE.GLTFLoader();
-
-        const lib = {
-            helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
-            duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf',
-            robot: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/glTF/BrainStem.gltf'
-        };
-
-        function spawn(id) {
-            if(currentObj) scene.remove(currentObj);
-            document.getElementById('status').style.display = 'block';
-
-            if(id === 'box') {
-                const geo = new THREE.BoxGeometry(2, 2, 2);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.5, roughness: 0.1 });
-                currentObj = new THREE.Mesh(geo, mat);
-                currentObj.position.y = 1;
-                scene.add(currentObj);
-                control.attach(currentObj);
-                document.getElementById('status').style.display = 'none';
-            } else {
-                // Versioning added to URL to kill cache
-                loader.load(lib[id] + "?v=" + Math.random(), (gltf) => {
-                    currentObj = gltf.scene;
-                    currentObj.scale.set(2, 2, 2);
-                    currentObj.position.y = 1;
-                    scene.add(currentObj);
-                    control.attach(currentObj);
-                    document.getElementById('status').style.display = 'none';
-                });
-            }
+        @keyframes glitch {
+            0% { transform: skew(0deg); }
+            20% { transform: skew(-2deg); opacity: 0.8; }
+            40% { transform: skew(2deg); color: #fff; }
+            100% { transform: skew(0deg); }
         }
 
-        // Start with Box
-        spawn('box');
-
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // Supabase
-        const _sb = supabase.createClient("https://fhqmmfhieowoplsiuiah.supabase.co", "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR68d0qoLwQyH6g_jIuzR");
-        async function save() {
-            if(!currentObj) return;
-            const { error } = await _sb.from('user_games').insert([{ game_state: {x: currentObj.position.x, y: currentObj.position.y, z: currentObj.position.z} }]);
-            alert(error ? "Error!" : "Engine Data Saved! ☁️");
-        }
-
-        window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth - 300, window.innerHeight);
-            camera.aspect = (window.innerWidth - 300) / window.innerHeight;
-            camera.updateProjectionMatrix();
-        });
-    </script>
-</body>
-</html>
+        .loader-bar {
+            width: 200px; height: 2px; background: #222; margin-top: 40px; position: relative; overflow: hidden;
