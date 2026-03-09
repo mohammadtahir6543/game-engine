@@ -1,161 +1,113 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-<script>
-// 1. Apni Keys yahan bharein
-const SUPABASE_URL = "https://fhqmmfhieowoplsiuiah.supabase.co";
-const SUPABASE_KEY = "YAHAN_WO_SB_PUBLISHABLE_VALA_CODE_PASTE_KAREIN"; // Screenshot 7 wala code
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// 2. Cloud Save Function
-async function saveToCloud() {
-    const boxPosition = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
-    
-    const { data, error } = await supabase
-      .from('user_games')
-      .insert([{ game_state: boxPosition }]);
-
-    if (error) {
-        console.error(error);
-        alert("Save Failed: " + error.message);
-    } else {
-        alert("Game Saved to Cloud! ☁️");
-    }
-}
-
-// Sidebar ke button ko connect karna
-document.querySelector('.save-btn').onclick = saveToCloud;
-</script>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Engine: Web & App</title>
+    <title>Cloud Engine Pro</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
-        :root { --bg: #121212; --panel: #1e1e1e; --accent: #00adb5; --text: #d4d4d4; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
-        
-        /* Welcome Screen */
-        #welcome-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; text-align: center; }
-        .choice-card { background: var(--panel); padding: 30px; border-radius: 15px; border: 1px solid #333; width: 300px; margin: 10px; cursor: pointer; transition: 0.3s; }
-        .choice-card:hover { border-color: var(--accent); transform: translateY(-5px); }
-
-        /* Engine UI */
-        #engine-ui { display: none; height: 100vh; width: 100vw; flex-direction: row; }
-        #sidebar { width: 260px; background: var(--panel); border-right: 1px solid #333; padding: 20px; display: flex; flex-direction: column; }
-        #viewport { flex-grow: 1; background: #000; }
-        
-        button { background: #2d2d2d; border: 1px solid #444; color: white; padding: 12px; margin: 8px 0; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
-        button:hover { background: var(--accent); }
-        .install-btn { background: var(--accent); color: #000; display: none; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
+        #ui-panel {
+            position: fixed; left: 0; top: 0; width: 200px; height: 100%;
+            background: rgba(20, 20, 20, 0.9); border-right: 2px solid #00adb5;
+            display: flex; flex-direction: column; padding: 20px; z-index: 10;
+        }
+        h2 { color: #00adb5; font-size: 18px; margin-bottom: 20px; }
+        button {
+            background: #222; color: #fff; border: 1px solid #444;
+            padding: 12px; margin-bottom: 10px; cursor: pointer; border-radius: 5px;
+            transition: 0.3s; font-weight: bold;
+        }
+        button:hover { background: #00adb5; color: #000; }
+        .save-btn { background: #28a745; border: none; margin-top: auto; }
+        #instructions {
+            position: fixed; bottom: 20px; right: 20px; color: #fff;
+            background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;
+        }
     </style>
 </head>
 <body>
 
-    <div id="welcome-screen">
-        <h1 style="color:var(--accent)">PRO GAME ENGINE</h1>
-        <p>Choose how you want to work</p>
-        
-        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-            <div class="choice-card" onclick="startOnline()">
-                <h3>🌐 Use Online</h3>
-                <p>Start building in your browser right now.</p>
-            </div>
-            
-            <div class="choice-card" id="download-card" onclick="installApp()">
-                <h3>📥 Download App</h3>
-                <p>Install on PC/Mobile for offline & faster access.</p>
-            </div>
-        </div>
+    <div id="ui-panel">
+        <h2>ENGINE PANEL</h2>
+        <button onclick="addBox()">+ Add 3D Object</button>
+        <button onclick="alert('Templates coming soon!')">Realistic Templates</button>
+        <button onclick="alert('Logic Editor Loading...')">No-Code Logic</button>
+        <button class="save-btn" onclick="saveToCloud()">Cloud Save (Supabase)</button>
     </div>
 
-    <div id="engine-ui">
-        <div id="sidebar">
-            <h2 style="color:var(--accent); font-size: 18px;">ENGINE PANEL</h2>
-            <button onclick="addBox()">+ Add 3D Object</button>
-            <button>Realistic Templates</button>
-            <button onclick="openLogic()">🧩 No-Code Logic</button>
-            
-            <div style="margin-top: auto;">
-                <button class="install-btn" id="sidebarInstall" onclick="installApp()">Download App Version</button>
-                <button onclick="saveProject()" style="background:#27ae60">Cloud Save (Email)</button>
-            </div>
-        </div>
-        <div id="viewport"></div>
-    </div>
+    <div id="instructions">Use <b>W, A, S, D</b> to Move Box</div>
 
     <script>
-        let deferredPrompt;
-        const welcome = document.getElementById('welcome-screen');
-        const engine = document.getElementById('engine-ui');
-        const sidebarInstall = document.getElementById('sidebarInstall');
+        // 1. THREE.JS SETUP
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        // PWA "Download" Logic
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // Agar browser allow karta hai download, toh button dikhao
-            sidebarInstall.style.display = 'block';
-        });
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
 
-        async function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User installed the app');
-                    startOnline(); // Download shuru karke engine khol do
-                }
-                deferredPrompt = null;
-            } else {
-                alert("This browser doesn't support direct download. Use 'Add to Home Screen' in settings.");
-                startOnline();
-            }
-        }
+        camera.position.z = 5;
 
-        function startOnline() {
-            welcome.style.display = 'none';
-            engine.style.display = 'flex';
-            initThreeJS();
-        }
-
-        // Three.js Engine Basic Setup
-        let scene, camera, renderer;
-        function initThreeJS() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 260) / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth - 260, window.innerHeight);
-            document.getElementById('viewport').appendChild(renderer.domElement);
-            
-            camera.position.z = 5;
-            const ambient = new THREE.AmbientLight(0x404040, 2);
-            scene.add(ambient);
-            
-            animate();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-
+        let mesh; 
         function addBox() {
-            const geo = new THREE.BoxGeometry();
-            const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5 });
-            const mesh = new THREE.Mesh(geo, mat);
+            if(mesh) scene.remove(mesh);
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({ color: 0x00adb5 });
+            mesh = new THREE.Mesh(geometry, material);
             scene.add(mesh);
         }
+        addBox();
 
-        function saveProject() {
-            alert("Syncing with Cloud Database...");
+        // 2. SUPABASE SETUP (MAINE AAPKI KEY DAAL DI HAI)
+        const SUPABASE_URL = "https://fhqmmfhieowoplsiuiah.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR..."; // I have used your key from screenshot
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function saveToCloud() {
+            if(!mesh) return alert("Add a box first!");
+            const pos = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
+            
+            const { data, error } = await _supabase
+                .from('user_games')
+                .insert([{ game_state: pos }]);
+
+            if (error) alert("Error: " + error.message);
+            else alert("Game Saved to Cloud! ☁️");
         }
 
-        // Service Worker Register (Required for Download)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+        // 3. MOVEMENT CONTROLS
+        window.addEventListener('keydown', (e) => {
+            if(!mesh) return;
+            const speed = 0.2;
+            if(e.key.toLowerCase() === 'w') mesh.position.y += speed;
+            if(e.key.toLowerCase() === 's') mesh.position.y -= speed;
+            if(e.key.toLowerCase() === 'a') mesh.position.x -= speed;
+            if(e.key.toLowerCase() === 'd') mesh.position.x += speed;
+        });
+
+        // 4. ANIMATION LOOP
+        function animate() {
+            requestAnimationFrame(animate);
+            if(mesh) {
+                mesh.rotation.x += 0.01;
+                mesh.rotation.y += 0.01;
+            }
+            renderer.render(scene, camera);
         }
+        animate();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
     </script>
 </body>
 </html>
