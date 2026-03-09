@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TAHIR INFINITE | THE NEXT GEN ENGINE</title>
+    <title>ULTRA GAMING ENGINE | PROFESSIONAL SUITE</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -12,109 +12,132 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     
     <style>
-        :root { --accent: #00adb5; --dark: #050505; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: white; }
+        :root { --accent: #00adb5; --bg: #050505; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
 
-        /* --- THE TAGDA INTRO CSS --- */
-        #intro-overlay {
+        /* --- 1. SETUP SCREEN --- */
+        #setup-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 5000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; transition: 1.5s ease-in-out;
+            background: radial-gradient(circle, #111 0%, #000 100%);
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .logo-text {
-            font-size: 50px; font-weight: 900; letter-spacing: 15px;
-            color: var(--accent); text-shadow: 0 0 20px var(--accent);
-            animation: glitch 2s infinite;
+        .setup-box {
+            background: rgba(20,20,20,0.95); padding: 40px; border-radius: 20px;
+            border: 1px solid var(--accent); width: 400px; text-align: center;
+            box-shadow: 0 0 50px rgba(0,173,181,0.2);
         }
-        .sub-text { font-size: 12px; letter-spacing: 5px; color: #555; margin-top: 10px; text-transform: uppercase; }
-        
-        @keyframes glitch {
-            0% { transform: skew(0deg); }
-            20% { transform: skew(-2deg); opacity: 0.8; }
-            40% { transform: skew(2deg); color: #fff; }
-            100% { transform: skew(0deg); }
+        .setup-box h1 { color: var(--accent); letter-spacing: 5px; font-size: 22px; margin-bottom: 30px; }
+        .setup-group { margin-bottom: 25px; text-align: left; }
+        .setup-group label { display: block; font-size: 10px; color: #666; letter-spacing: 2px; margin-bottom: 8px; }
+        select {
+            width: 100%; padding: 12px; background: #111; border: 1px solid #333;
+            color: white; border-radius: 6px; cursor: pointer; font-weight: bold;
         }
+        .start-btn {
+            width: 100%; padding: 15px; background: var(--accent); border: none;
+            color: black; font-weight: 900; letter-spacing: 2px; border-radius: 8px;
+            cursor: pointer; transition: 0.3s; margin-top: 10px;
+        }
+        .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
 
-        .loader-bar {
-            width: 200px; height: 2px; background: #222; margin-top: 40px; position: relative; overflow: hidden;
-        }
-        .loader-progress {
-            width: 0%; height: 100%; background: var(--accent);
-            box-shadow: 0 0 10px var(--accent); animation: load 3s forwards;
-        }
-        @keyframes load { to { width: 100%; } }
-
-        /* --- ENGINE UI --- */
-        #ui-container { opacity: 0; transition: 2s; filter: blur(10px); }
-        #asset-sidebar {
+        /* --- 2. ENGINE UI --- */
+        #main-engine { display: none; opacity: 0; transition: 2s; }
+        #sidebar {
             position: fixed; right: 0; top: 0; width: 300px; height: 100%;
-            background: rgba(10, 10, 10, 0.95); border-left: 1px solid var(--accent);
+            background: rgba(10,10,10,0.98); border-left: 1px solid var(--accent);
             z-index: 100; display: flex; flex-direction: column;
         }
-        .header { padding: 25px; text-align: center; border-bottom: 1px solid #222; color: var(--accent); font-weight: bold; }
+        .header { padding: 25px; text-align: center; border-bottom: 1px solid #222; color: var(--accent); font-weight: bold; font-size: 14px; letter-spacing: 2px; }
         .grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; }
-        .card { background: #111; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
-        .card:hover { border-color: var(--accent); transform: scale(1.05); }
+        .card { background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid #333; }
+        .card:hover { border-color: var(--accent); background: #222; }
         .card img { width: 100%; border-radius: 4px; margin-bottom: 5px; }
-        
-        #editor-tools { position: fixed; left: 20px; top: 20px; z-index: 90; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px; border: 1px solid #333; }
-        button { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; background: transparent; border: 1px solid var(--accent); color: white; border-radius: 6px; font-weight: bold; font-size: 10px; transition: 0.3s; }
-        button:hover { background: var(--accent); color: black; box-shadow: 0 0 15px var(--accent); }
+
+        #hud { position: fixed; left: 20px; top: 20px; z-index: 90; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 12px; border: 1px solid #333; width: 220px; }
+        .btn { width: 100%; padding: 10px; margin-bottom: 8px; cursor: pointer; background: #111; border: 1px solid var(--accent); color: white; border-radius: 5px; font-size: 10px; font-weight: bold; }
+        .btn:hover { background: var(--accent); color: black; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="intro-overlay">
-        <div class="logo-text">TAHIR</div>
-        <div class="sub-text">Infinite Engine v4.0</div>
-        <div class="loader-bar"><div class="loader-progress"></div></div>
+    <div id="setup-screen">
+        <div class="setup-box">
+            <h1>ULTRA ENGINE</h1>
+            <div class="setup-group">
+                <label>TARGET PLATFORM</label>
+                <select id="platform">
+                    <option value="pc">PC / HIGH GRAPHICS</option>
+                    <option value="mobile">MOBILE / OPTIMIZED</option>
+                </select>
+            </div>
+            <div class="setup-group">
+                <label>ENGINE MODE</label>
+                <select id="mode">
+                    <option value="nocode">NO-CODE (VISUAL EDITOR)</option>
+                    <option value="script">SCRIPTING (JS/PYTHON)</option>
+                </select>
+            </div>
+            <button class="start-btn" onclick="initializeEngine()">INITIALIZE PROJECT</button>
+        </div>
     </div>
 
-    <div id="ui-container">
-        <div id="editor-tools">
-            <h3 style="margin:0 0 15px 0; font-size:12px; color:var(--accent); letter-spacing:2px;">DASHBOARD</h3>
-            <button onclick="control.setMode('translate')">MOVE TOOL (W)</button>
-            <button onclick="control.setMode('rotate')">ROTATE TOOL (E)</button>
-            <button onclick="control.setMode('scale')">SCALE TOOL (R)</button>
-            <button style="background:#28a745; border:none;" onclick="save()">SAVE TO NEURAL CLOUD</button>
+    <div id="main-engine">
+        <div id="hud">
+            <h3 style="margin:0 0 15px 0; font-size:11px; color:var(--accent); letter-spacing:2px;">ULTRA CORE v5.0</h3>
+            <button class="btn" onclick="control.setMode('translate')">MOVE (W)</button>
+            <button class="btn" onclick="control.setMode('rotate')">ROTATE (E)</button>
+            <button class="btn" onclick="control.setMode('scale')">SCALE (R)</button>
+            <button class="btn" style="background:#28a745; border:none;" onclick="save()">SYNC TO CLOUD</button>
+            <div id="stats" style="font-size:9px; color:#555; margin-top:10px;"></div>
         </div>
 
-        <div id="asset-sidebar">
-            <div class="header">ASSET REPOSITORY</div>
+        <div id="sidebar">
+            <div class="header">ASSET STORE</div>
             <div class="grid">
                 <div class="card" onclick="spawn('helmet')">
                     <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png">
-                    <span>SC-FI HELMET</span>
+                    <span>HELMET</span>
                 </div>
                 <div class="card" onclick="spawn('duck')">
                     <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png">
-                    <span>PBR DUCK</span>
+                    <span>DUCK</span>
                 </div>
                 <div class="card" onclick="spawn('robot')">
                     <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/screenshot/screenshot.png">
-                    <span>ROBOTIC CORE</span>
+                    <span>ROBOT</span>
                 </div>
                 <div class="card" onclick="spawn('box')">
-                    <div style="height:65px; background:linear-gradient(45deg, #00adb5, #000); border-radius:5px; margin-bottom:5px;"></div>
-                    <span>DEV MESH</span>
+                    <div style="height:60px; background:var(--accent); border-radius:4px; margin-bottom:5px;"></div>
+                    <span>DEV CUBE</span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- INTRO LOGIC ---
-        window.onload = () => {
+        let platform, mode;
+
+        function initializeEngine() {
+            platform = document.getElementById('platform').value;
+            mode = document.getElementById('mode').value;
+
+            document.getElementById('setup-screen').style.transition = '2s';
+            document.getElementById('setup-screen').style.opacity = '0';
+            
             setTimeout(() => {
-                const intro = document.getElementById('intro-overlay');
-                const ui = document.getElementById('ui-container');
-                intro.style.opacity = '0';
-                ui.style.opacity = '1';
-                ui.style.filter = 'blur(0px)';
-                setTimeout(() => { intro.style.display = 'none'; }, 1500);
-            }, 3500); // 3.5 seconds ka tagda intro
-        };
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('main-engine').style.display = 'block';
+                setTimeout(() => { document.getElementById('main-engine').style.opacity = '1'; }, 100);
+                
+                // Show choice in console/HUD
+                document.getElementById('stats').innerText = `PLATFORM: ${platform.toUpperCase()}\nMODE: ${mode.toUpperCase()}`;
+                
+                // Adjust graphics based on choice
+                if(platform === 'mobile') {
+                    renderer.setPixelRatio(1); // Low graphics for mobile
+                }
+            }, 1500);
+        }
 
         // --- ENGINE CORE ---
         const scene = new THREE.Scene();
@@ -123,10 +146,9 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth - 300, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.GridHelper(100, 50, 0x00adb5, 0x111111));
+        scene.add(new THREE.GridHelper(50, 50, 0x00adb5, 0x222222));
         const light = new THREE.DirectionalLight(0xffffff, 2);
         light.position.set(5, 10, 5);
         scene.add(light);
@@ -151,13 +173,13 @@
             if(currentObj) scene.remove(currentObj);
             if(id === 'box') {
                 const geo = new THREE.BoxGeometry(2, 2, 2);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.7, roughness: 0.1 });
+                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.5, roughness: 0.1 });
                 currentObj = new THREE.Mesh(geo, mat);
                 currentObj.position.y = 1;
                 scene.add(currentObj);
                 control.attach(currentObj);
             } else {
-                loader.load(assets[id], (gltf) => {
+                loader.load(assets[id] + "?v=" + Math.random(), (gltf) => {
                     currentObj = gltf.scene;
                     currentObj.scale.set(2, 2, 2);
                     currentObj.position.y = 1;
@@ -166,7 +188,7 @@
                 });
             }
         }
-        spawn('helmet');
+        spawn('box');
 
         function animate() {
             requestAnimationFrame(animate);
@@ -179,7 +201,7 @@
         async function save() {
             if(!currentObj) return;
             const { error } = await _sb.from('user_games').insert([{ game_state: {x: currentObj.position.x, y: currentObj.position.y, z: currentObj.position.z} }]);
-            alert(error ? "Sync Fail!" : "Neural Save Successful! 🚀");
+            alert(error ? "Sync Fail!" : "Project Saved! ☁️");
         }
 
         window.addEventListener('resize', () => {
