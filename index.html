@@ -37,3 +37,156 @@
 
         .loader-bar {
             width: 200px; height: 2px; background: #222; margin-top: 40px; position: relative; overflow: hidden;
+        }
+        .loader-progress {
+            width: 0%; height: 100%; background: var(--accent);
+            box-shadow: 0 0 10px var(--accent); animation: load 3s forwards;
+        }
+        @keyframes load { to { width: 100%; } }
+
+        /* --- ENGINE UI --- */
+        #ui-container { opacity: 0; transition: 2s; filter: blur(10px); }
+        #asset-sidebar {
+            position: fixed; right: 0; top: 0; width: 300px; height: 100%;
+            background: rgba(10, 10, 10, 0.95); border-left: 1px solid var(--accent);
+            z-index: 100; display: flex; flex-direction: column;
+        }
+        .header { padding: 25px; text-align: center; border-bottom: 1px solid #222; color: var(--accent); font-weight: bold; }
+        .grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; }
+        .card { background: #111; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
+        .card:hover { border-color: var(--accent); transform: scale(1.05); }
+        .card img { width: 100%; border-radius: 4px; margin-bottom: 5px; }
+        
+        #editor-tools { position: fixed; left: 20px; top: 20px; z-index: 90; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px; border: 1px solid #333; }
+        button { width: 100%; padding: 12px; margin-bottom: 10px; cursor: pointer; background: transparent; border: 1px solid var(--accent); color: white; border-radius: 6px; font-weight: bold; font-size: 10px; transition: 0.3s; }
+        button:hover { background: var(--accent); color: black; box-shadow: 0 0 15px var(--accent); }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="intro-overlay">
+        <div class="logo-text">TAHIR</div>
+        <div class="sub-text">Infinite Engine v4.0</div>
+        <div class="loader-bar"><div class="loader-progress"></div></div>
+    </div>
+
+    <div id="ui-container">
+        <div id="editor-tools">
+            <h3 style="margin:0 0 15px 0; font-size:12px; color:var(--accent); letter-spacing:2px;">DASHBOARD</h3>
+            <button onclick="control.setMode('translate')">MOVE TOOL (W)</button>
+            <button onclick="control.setMode('rotate')">ROTATE TOOL (E)</button>
+            <button onclick="control.setMode('scale')">SCALE TOOL (R)</button>
+            <button style="background:#28a745; border:none;" onclick="save()">SAVE TO NEURAL CLOUD</button>
+        </div>
+
+        <div id="asset-sidebar">
+            <div class="header">ASSET REPOSITORY</div>
+            <div class="grid">
+                <div class="card" onclick="spawn('helmet')">
+                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png">
+                    <span>SC-FI HELMET</span>
+                </div>
+                <div class="card" onclick="spawn('duck')">
+                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png">
+                    <span>PBR DUCK</span>
+                </div>
+                <div class="card" onclick="spawn('robot')">
+                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/screenshot/screenshot.png">
+                    <span>ROBOTIC CORE</span>
+                </div>
+                <div class="card" onclick="spawn('box')">
+                    <div style="height:65px; background:linear-gradient(45deg, #00adb5, #000); border-radius:5px; margin-bottom:5px;"></div>
+                    <span>DEV MESH</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- INTRO LOGIC ---
+        window.onload = () => {
+            setTimeout(() => {
+                const intro = document.getElementById('intro-overlay');
+                const ui = document.getElementById('ui-container');
+                intro.style.opacity = '0';
+                ui.style.opacity = '1';
+                ui.style.filter = 'blur(0px)';
+                setTimeout(() => { intro.style.display = 'none'; }, 1500);
+            }, 3500); // 3.5 seconds ka tagda intro
+        };
+
+        // --- ENGINE CORE ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020202);
+        const camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 300) / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth - 300, window.innerHeight);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.body.appendChild(renderer.domElement);
+
+        scene.add(new THREE.GridHelper(100, 50, 0x00adb5, 0x111111));
+        const light = new THREE.DirectionalLight(0xffffff, 2);
+        light.position.set(5, 10, 5);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+        camera.position.set(0, 5, 10);
+        camera.lookAt(0, 0, 0);
+
+        const control = new THREE.TransformControls(camera, renderer.domElement);
+        scene.add(control);
+
+        let currentObj;
+        const loader = new THREE.GLTFLoader();
+
+        const assets = {
+            helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
+            duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf',
+            robot: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/glTF/BrainStem.gltf'
+        };
+
+        function spawn(id) {
+            if(currentObj) scene.remove(currentObj);
+            if(id === 'box') {
+                const geo = new THREE.BoxGeometry(2, 2, 2);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.7, roughness: 0.1 });
+                currentObj = new THREE.Mesh(geo, mat);
+                currentObj.position.y = 1;
+                scene.add(currentObj);
+                control.attach(currentObj);
+            } else {
+                loader.load(assets[id], (gltf) => {
+                    currentObj = gltf.scene;
+                    currentObj.scale.set(2, 2, 2);
+                    currentObj.position.y = 1;
+                    scene.add(currentObj);
+                    control.attach(currentObj);
+                });
+            }
+        }
+        spawn('helmet');
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Supabase Save
+        const _sb = supabase.createClient("https://fhqmmfhieowoplsiuiah.supabase.co", "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR68d0qoLwQyH6g_jIuzR");
+        async function save() {
+            if(!currentObj) return;
+            const { error } = await _sb.from('user_games').insert([{ game_state: {x: currentObj.position.x, y: currentObj.position.y, z: currentObj.position.z} }]);
+            alert(error ? "Sync Fail!" : "Neural Save Successful! 🚀");
+        }
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth - 300, window.innerHeight);
+            camera.aspect = (window.innerWidth - 300) / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
