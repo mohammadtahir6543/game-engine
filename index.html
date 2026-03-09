@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULTRA ENGINE | UE5 EDITION</title>
+    <title>ULTRA ENGINE 5 | FREE ASSET EDITION</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -11,116 +11,88 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Orbitron:wght@900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --ue-bg: #151515; --ue-panel: #1e1e1e; --ue-accent: #3b82f6; --ue-border: #2a2a2a; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; color: #ccc; }
+        :root { --ue-bg: #111111; --ue-panel: #1a1a1a; --ue-accent: #3b82f6; --ue-border: #252525; }
+        body, html { margin: 0; padding: 0; height: 100vh; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; color: #aaa; }
 
-        /* --- CINEMATIC INTRO --- */
-        #intro-layer { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        #intro-layer h1 { font-family: 'Orbitron'; font-size: 50px; color: #fff; letter-spacing: 15px; text-shadow: 0 0 30px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.98); } }
+        /* --- INTRO & CHARACTER SETUP --- */
+        .setup-overlay { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .card { background: var(--ue-panel); padding: 40px; border: 1px solid var(--ue-border); width: 450px; border-radius: 4px; text-align: center; }
+        input, select, .btn-ue { width: 100%; padding: 14px; margin-top: 15px; background: #0d0d0d; border: 1px solid #333; color: #fff; border-radius: 2px; font-family: 'Inter'; box-sizing: border-box; }
+        .btn-ue { background: var(--ue-accent); font-weight: bold; border: none; cursor: pointer; color: white; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* --- SETUP SCREEN --- */
-        #setup-screen { position: fixed; inset: 0; z-index: 9999; background: #0a0a0a; display: none; align-items: center; justify-content: center; }
-        .setup-box { background: var(--ue-panel); border: 1px solid var(--ue-border); padding: 40px; width: 400px; text-align: center; border-radius: 4px; }
-        input, select, .launch-btn { width: 100%; padding: 12px; margin-top: 15px; background: #111; border: 1px solid var(--ue-border); color: #fff; outline: none; border-radius: 4px; }
-        .launch-btn { background: var(--ue-accent); font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
-        .launch-btn:hover { background: #2563eb; }
-
-        /* --- UE5 INTERFACE --- */
-        #main-editor { display: none; grid-template-columns: 250px 1fr 280px; grid-template-rows: 40px 1fr 250px; height: 100vh; width: 100vw; background: var(--ue-bg); }
+        /* --- UE5 LAYOUT --- */
+        #editor { display: none; height: 100vh; grid-template-columns: 260px 1fr 280px; grid-template-rows: 40px 1fr 280px; }
         
-        header { grid-column: 1 / -1; background: #111; border-bottom: 1px solid var(--ue-border); display: flex; align-items: center; padding: 0 20px; font-size: 11px; }
+        header { grid-column: 1 / -1; background: #0a0a0a; border-bottom: 1px solid var(--ue-border); display: flex; align-items: center; padding: 0 20px; font-size: 11px; color: #666; }
+        .outliner { background: var(--ue-panel); border-right: 1px solid var(--ue-border); padding: 15px; font-size: 12px; }
+        .viewport { background: #050505; position: relative; }
+        .details { background: var(--ue-panel); border-left: 1px solid var(--ue-border); padding: 15px; font-size: 12px; }
+
+        /* --- ASSET STORE (CONTENT BROWSER) --- */
+        .content-browser { grid-column: 1 / -1; background: #151515; border-top: 2px solid #222; display: flex; flex-direction: column; }
+        .browser-header { background: #0d0d0d; padding: 5px 15px; border-bottom: 1px solid #222; font-size: 10px; font-weight: bold; display: flex; gap: 20px; }
+        .asset-grid { flex-grow: 1; padding: 20px; display: flex; gap: 15px; overflow-x: auto; align-items: center; }
         
-        .outliner { background: var(--ue-panel); border-right: 1px solid var(--ue-border); padding: 10px; font-size: 12px; }
-        .viewport { background: #000; position: relative; overflow: hidden; }
-        .details { background: var(--ue-panel); border-left: 1px solid var(--ue-border); padding: 10px; font-size: 12px; }
+        .asset-card { min-width: 140px; height: 170px; background: #222; border: 1px solid #333; border-radius: 4px; cursor: pointer; text-align: center; padding: 10px; transition: 0.2s; }
+        .asset-card:hover { border-color: var(--ue-accent); background: #282828; }
+        .asset-card img { width: 100%; height: 90px; object-fit: cover; border-radius: 2px; margin-bottom: 10px; }
+        .asset-card span { font-size: 10px; display: block; color: #eee; }
+        .asset-card small { font-size: 8px; color: #555; text-transform: uppercase; }
 
-        /* --- ASSET STORE (CONTENT DRAWER) --- */
-        .content-drawer { grid-column: 1 / -1; background: #181818; border-top: 2px solid var(--ue-border); padding: 15px; display: flex; flex-direction: column; }
-        .asset-grid { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; }
-        .asset-item { min-width: 140px; height: 160px; background: #222; border-radius: 4px; border: 1px solid var(--ue-border); cursor: pointer; transition: 0.3s; text-align: center; padding: 10px; }
-        .asset-item:hover { border-color: var(--ue-accent); background: #2a2a2a; }
-        .asset-item img { width: 100%; height: 90px; object-fit: cover; border-radius: 2px; margin-bottom: 8px; }
-        .asset-item span { font-size: 10px; font-weight: bold; color: #888; }
-
-        /* HUD Buttons */
-        .viewport-tools { position: absolute; top: 15px; left: 15px; display: flex; gap: 10px; }
-        .tool-btn { background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px 12px; font-size: 10px; cursor: pointer; }
-        .tool-btn.active { background: var(--ue-accent); border-color: var(--ue-accent); }
+        /* HUD Tools */
+        .gizmo-tools { position: absolute; top: 15px; left: 15px; display: flex; gap: 5px; z-index: 50; }
+        .tool { background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 15px; font-size: 10px; cursor: pointer; }
+        .tool.active { background: var(--ue-accent); border-color: var(--ue-accent); }
     </style>
 </head>
 <body>
 
-    <div id="intro-layer" onclick="showSetup()">
-        <h1>ULTRA ENGINE</h1>
-        <p style="position:absolute; bottom:50px; color:#555; letter-spacing:2px;">CLICK TO START SESSION</p>
-    </div>
-
-    <div id="setup-screen">
-        <div class="setup-box">
-            <h2 style="margin-top:0; color:#fff;">PROJECT SETTINGS</h2>
-            <input type="text" id="dev-name" placeholder="DEVELOPER NAME">
-            <select id="platform">
-                <option>PC / HIGH-END RENDERING</option>
-                <option>MOBILE / OPTIMIZED</option>
+    <div id="intro-screen" class="setup-overlay">
+        <div class="card">
+            <h1 style="font-family:'Orbitron'; color:white; letter-spacing:8px; margin-bottom:30px;">ULTRA ENGINE 5</h1>
+            <input type="text" id="username" placeholder="DEVELOPER NAME">
+            <select id="gender">
+                <option value="male">CHARACTER: ADAM (MALE)</option>
+                <option value="female">CHARACTER: EVA (FEMALE)</option>
             </select>
-            <div style="margin-top:20px; text-align:left; font-size:11px;">
-                <label>SELECT STARTING CHARACTER:</label>
-                <select id="char-choice">
-                    <option value="male">ADAM (MALE)</option>
-                    <option value="female">EVA (FEMALE)</option>
-                </select>
-            </div>
-            <button class="launch-btn" onclick="launchEngine()">LAUNCH EDITOR</button>
+            <button class="btn-ue" onclick="launchUE5()">INITIALIZE WORLD</button>
+            <p style="font-size: 10px; color: #444; margin-top: 20px;">ALL ASSETS ARE OPEN-SOURCE & FREE</p>
         </div>
     </div>
 
-    <div id="main-editor">
+    <div id="editor">
         <header>
-            <span style="color:var(--ue-accent); font-weight:bold;">ULTRA ENGINE 5.0</span>
-            <span style="margin-left:30px; color:#666;">| Developer: <span id="id-tag" style="color:#eee"></span></span>
+            <span style="color:var(--ue-accent); font-weight:bold;">UE5.2_STABLE</span>
+            <span style="margin-left:25px;">User: <span id="display-user" style="color:#fff"></span></span>
         </header>
 
         <aside class="outliner">
-            <p style="color:#666; margin-bottom:10px;">WORLD OUTLINER</p>
-            <div style="color:var(--ue-accent);">● Scene_Root</div>
-            <div style="margin-left:15px;">☼ Global_Light</div>
-            <div style="margin-left:15px;">🎥 Main_Camera</div>
-            <div id="object-list" style="margin-left:15px;">📦 Player_Mesh</div>
+            <p style="color:#555; margin-bottom:10px; font-weight:bold;">OUTLINER</p>
+            <div style="color:var(--ue-accent);">● World_Root</div>
+            <div style="margin-left:15px; color:#999;">☼ Sun_Light</div>
+            <div style="margin-left:15px; color:#999;">🎥 Player_Cam</div>
+            <div id="scene-list" style="margin-left:15px; color:#fff;">👤 Player_Character</div>
         </aside>
 
         <main class="viewport" id="viewport">
-            <div class="viewport-tools">
-                <button class="tool-btn active" onclick="setTool('translate')">MOVE (W)</button>
-                <button class="tool-btn" onclick="setTool('rotate')">ROTATE (E)</button>
+            <div class="gizmo-tools">
+                <button class="tool active" id="btn-move" onclick="setGizmo('translate')">MOVE (W)</button>
+                <button class="tool" id="btn-rotate" onclick="setGizmo('rotate')">ROTATE (E)</button>
             </div>
         </main>
 
         <aside class="details">
-            <p style="color:#666;">DETAILS</p>
-            <div id="prop-info" style="font-size:10px; line-height:2;">Select an object to see properties...</div>
+            <p style="color:#555; font-weight:bold;">DETAILS</p>
+            <div style="font-size:10px; color:#444; line-height:2;">Select any asset to view its transform, materials, and physics properties.</div>
         </aside>
 
-        <section class="content-drawer">
-            <p style="margin:0 0 10px 0; font-size:11px; font-weight:bold; color:#555;">CONTENT BROWSER / ASSET STORE</p>
-            <div class="asset-grid">
-                <div class="asset-item" onclick="spawn('helmet')">
-                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png">
-                    <span>Sci-Fi Helmet</span>
-                </div>
-                <div class="asset-item" onclick="spawn('duck')">
-                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png">
-                    <span>Industrial Duck</span>
-                </div>
-                <div class="asset-item" onclick="spawn('lantern')">
-                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/screenshot/screenshot.png">
-                    <span>Vintage Lantern</span>
-                </div>
-                <div class="asset-item" onclick="spawn('boombox')">
-                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoomBox/screenshot/screenshot.png">
-                    <span>Cyber Audio</span>
-                </div>
+        <section class="content-browser">
+            <div class="browser-header">
+                <span style="color:#fff">CONTENT BROWSER</span>
+                <span>ASSET STORE (FREE)</span>
             </div>
+            <div class="asset-grid">
+                </div>
         </section>
     </div>
 
@@ -128,53 +100,52 @@
         let scene, camera, renderer, control, player;
         const loader = new THREE.GLTFLoader();
 
-        function showSetup() {
-            document.getElementById('intro-layer').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('intro-layer').style.display = 'none';
-                document.getElementById('setup-screen').style.display = 'flex';
-            }, 500);
+        const freeAssets = [
+            { id: 'helmet', name: 'Sci-Fi Helmet', cat: 'Props', img: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png', url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf' },
+            { id: 'duck', name: 'Yellow Duck', cat: 'Props', img: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png', url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf' },
+            { id: 'lantern', name: 'Antique Lantern', cat: 'Environment', img: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/screenshot/screenshot.png', url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.gltf' },
+            { id: 'boombox', name: 'Retro Boombox', cat: 'Electronics', img: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoomBox/screenshot/screenshot.png', url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoomBox/glTF/BoomBox.gltf' }
+        ];
+
+        function launchUE5() {
+            const user = document.getElementById('username').value || "Creator_X";
+            document.getElementById('display-user').innerText = user;
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('editor').style.display = 'grid';
+            initEngine();
+            loadBrowser();
         }
 
-        function launchEngine() {
-            const name = document.getElementById('dev-name').value || "Guest_Dev";
-            document.getElementById('id-tag').innerText = name;
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('main-editor').style.display = 'grid';
-            init3D();
-        }
-
-        function init3D() {
+        function initEngine() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0a);
-            
-            const viewport = document.getElementById('viewport');
-            camera = new THREE.PerspectiveCamera(75, viewport.clientWidth / viewport.clientHeight, 0.1, 1000);
+            const view = document.getElementById('viewport');
+            camera = new THREE.PerspectiveCamera(70, view.clientWidth / view.clientHeight, 0.1, 1000);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+            renderer.setSize(view.clientWidth, view.clientHeight);
             renderer.outputEncoding = THREE.sRGBEncoding;
-            viewport.appendChild(renderer.domElement);
+            view.appendChild(renderer.domElement);
 
-            const grid = new THREE.GridHelper(100, 100, 0x333333, 0x222222);
-            scene.add(grid);
-            
-            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const light = new THREE.DirectionalLight(0xffffff, 1.5);
-            light.position.set(10, 20, 10);
-            scene.add(light);
+            scene.add(new THREE.GridHelper(100, 100, 0x222222, 0x151515));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+            sun.position.set(10, 20, 10);
+            scene.add(sun);
 
-            camera.position.set(0, 5, 10);
+            camera.position.set(0, 5, 12);
             control = new THREE.TransformControls(camera, renderer.domElement);
             scene.add(control);
 
-            // Spawn selected character
-            const gender = document.getElementById('char-choice').value;
-            const charUrl = gender === 'male' ? 'https://models.readyplayer.me/6385d5682855f75661642220.glb' : 'https://models.readyplayer.me/6385d5bc2855f75661642231.glb';
-            
+            // Load Player Character (Adam/Eva)
+            const gender = document.getElementById('gender').value;
+            const charUrl = gender === 'male' ? 
+                'https://models.readyplayer.me/6385d5682855f75661642220.glb' : 
+                'https://models.readyplayer.me/6385d5bc2855f75661642231.glb';
+
             loader.load(charUrl, (gltf) => {
                 player = gltf.scene;
-                player.scale.set(1.5, 1.5, 1.5);
+                player.scale.set(1.8, 1.8, 1.8);
                 scene.add(player);
                 control.attach(player);
             });
@@ -182,32 +153,35 @@
             animate();
         }
 
-        const library = {
-            helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
-            duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf',
-            lantern: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.gltf',
-            boombox: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoomBox/glTF/BoomBox.gltf'
-        };
+        function loadBrowser() {
+            const grid = document.querySelector('.asset-grid');
+            freeAssets.forEach(a => {
+                const card = document.createElement('div');
+                card.className = 'asset-card';
+                card.innerHTML = `<img src="${a.img}"><small>${a.cat}</small><span>${a.name}</span>`;
+                card.onclick = () => spawn(a.url, a.name);
+                grid.appendChild(card);
+            });
+        }
 
-        function spawn(type) {
-            loader.load(library[type], (gltf) => {
+        function spawn(url, name) {
+            loader.load(url, (gltf) => {
                 const mesh = gltf.scene;
-                mesh.position.set(Math.random()*5, 0, Math.random()*5);
+                mesh.position.set(Math.random()*6-3, 0, Math.random()*6-3);
                 mesh.scale.set(1.5, 1.5, 1.5);
                 scene.add(mesh);
                 control.attach(mesh);
                 
-                // Add to outliner
-                const entry = document.createElement('div');
-                entry.innerText = '📦 ' + type.toUpperCase();
-                document.getElementById('object-list').appendChild(entry);
+                const li = document.createElement('div');
+                li.innerText = "📦 " + name;
+                document.getElementById('scene-list').appendChild(li);
             });
         }
 
-        function setTool(mode) {
+        function setGizmo(mode) {
             control.setMode(mode);
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            document.getElementById('btn-move').classList.toggle('active', mode === 'translate');
+            document.getElementById('btn-rotate').classList.toggle('active', mode === 'rotate');
         }
 
         function animate() {
