@@ -1,5 +1,30 @@
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+// 1. Apni Keys yahan bharein
 const SUPABASE_URL = "https://fhqmmfhieowoplsiuiah.supabase.co";
-const SUPABASE_KEY = "YAHAN_WO_SB_PUBLISHABLE_VALA_CODE_PASTE_KAREIN";<!DOCTYPE html>
+const SUPABASE_KEY = "YAHAN_WO_SB_PUBLISHABLE_VALA_CODE_PASTE_KAREIN"; // Screenshot 7 wala code
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 2. Cloud Save Function
+async function saveToCloud() {
+    const boxPosition = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
+    
+    const { data, error } = await supabase
+      .from('user_games')
+      .insert([{ game_state: boxPosition }]);
+
+    if (error) {
+        console.error(error);
+        alert("Save Failed: " + error.message);
+    } else {
+        alert("Game Saved to Cloud! ☁️");
+    }
+}
+
+// Sidebar ke button ko connect karna
+document.querySelector('.save-btn').onclick = saveToCloud;
+</script>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
