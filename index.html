@@ -1,120 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tahir's Final Cloud Engine</title>
+    <title>Tahir Pro Engine v1.0</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    
     <style>
-        body { margin: 0; overflow: hidden; background: #0a0a0a; color: white; font-family: sans-serif; }
-        #ui { position: fixed; top: 10px; left: 10px; z-index: 10; display: flex; flex-direction: column; gap: 10px; width: 200px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; border: 1px solid #00adb5; }
-        select, button { padding: 10px; cursor: pointer; background: #222; border: 1px solid #444; color: white; border-radius: 5px; font-weight: bold; width: 100%; }
-        button:hover { background: #00adb5; color: black; }
-        .save-btn { background: #28a745 !important; border: none; }
-        #loader-ui { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #00adb5; color: black; padding: 15px; border-radius: 5px; font-weight: bold; }
+        body { margin: 0; overflow: hidden; background: #050505; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #ui { 
+            position: fixed; top: 15px; left: 15px; z-index: 10; 
+            display: flex; flex-direction: column; gap: 12px; width: 220px; 
+            background: rgba(10, 10, 10, 0.9); padding: 20px; 
+            border-radius: 12px; border: 1px solid #00adb5;
+            box-shadow: 0 0 15px rgba(0, 173, 181, 0.2);
+        }
+        h3 { margin: 0 0 10px 0; color: #00adb5; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+        select, button { 
+            padding: 12px; cursor: pointer; background: #1a1a1a; 
+            border: 1px solid #333; color: white; border-radius: 6px; 
+            font-weight: bold; width: 100%; transition: 0.2s;
+        }
+        button:hover { background: #00adb5; color: black; border-color: #fff; }
+        .save-btn { background: #28a745 !important; border: none; margin-top: 10px; }
+        #loading-text { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; color: #00adb5; font-weight: bold; font-size: 18px; z-index: 20; }
+        #controls-hint { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 30px; font-size: 12px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <div id="loader-ui">Model Load Ho Raha Hai... 📦</div>
+    <div id="loading-text">LOAD HO RAHA HAI... 📦</div>
 
     <div id="ui">
-        <h3 style="color:#00adb5; margin-top:0;">ASSET LIBRARY</h3>
+        <h3>Asset Library</h3>
         <select id="assetSelect">
-            <option value="box">Simple 3D Box</option>
-            <option value="helmet">Realistic Helmet</option>
-            <option value="duck">Rubber Duck</option>
+            <option value="box">Basic Cube</option>
+            <option value="helmet">Sci-Fi Helmet (Real)</option>
+            <option value="duck">Rubber Duck (Real)</option>
         </select>
         <button onclick="loadSelectedAsset()">Spawn Asset</button>
-        <hr style="width:100%; border:0.5px solid #333;">
-        <button onclick="toggleLogic()">Auto-Rotate: <span id="logic-stat">OFF</span></button>
+        
+        <h3 style="margin-top:20px;">Logic & World</h3>
+        <button onclick="toggleRotate()">Auto-Rotate: <span id="rot-stat">OFF</span></button>
         <button class="save-btn" onclick="saveToCloud()">Cloud Save (Supabase)</button>
     </div>
 
+    <div id="controls-hint">Use <b>W, A, S, D</b> to Move Asset</div>
+
     <script>
+        // --- 1. SCENE SETUP ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050505);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         renderer.outputEncoding = THREE.sRGBEncoding;
         document.body.appendChild(renderer.domElement);
 
-        // ZABARDAST LIGHTING (Ab kaala nahi dikhega)
-        const light1 = new THREE.DirectionalLight(0xffffff, 2);
-        light1.position.set(2, 5, 5);
-        scene.add(light1);
-        const light2 = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(light2);
+        // --- 2. LIGHTING & TERRAIN ---
+        const light = new THREE.DirectionalLight(0xffffff, 2);
+        light.position.set(5, 10, 7.5);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-        camera.position.set(0, 1, 4);
+        // Professional Grid Floor (Zameen)
+        const grid = new THREE.GridHelper(20, 20, 0x00adb5, 0x222222);
+        scene.add(grid);
+        
 
-        let currentModel, isLogicOn = false;
+        camera.position.set(0, 3, 6);
+        camera.lookAt(0, 0, 0);
+
+        // --- 3. ASSET LOADER ---
+        let currentModel, isRotating = false;
         const loader = new THREE.GLTFLoader();
-
-        const assetLinks = {
-            helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
-            duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf'
-        };
 
         async function loadSelectedAsset() {
             const type = document.getElementById('assetSelect').value;
+            const loadingUI = document.getElementById('loading-text');
+            
             if(currentModel) scene.remove(currentModel);
             
             if(type === 'box') {
-                const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                const geo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
                 const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.5, roughness: 0.2 });
                 currentModel = new THREE.Mesh(geo, mat);
+                currentModel.position.y = 0.6; // Zameen ke upar
                 scene.add(currentModel);
             } else {
-                document.getElementById('loader-ui').style.display = 'block';
-                loader.load(assetLinks[type], (gltf) => {
+                loadingUI.style.display = 'block';
+                const links = {
+                    helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
+                    duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf'
+                };
+                
+                loader.load(links[type], (gltf) => {
                     currentModel = gltf.scene;
+                    currentModel.position.y = 0.8;
                     currentModel.scale.set(1.5, 1.5, 1.5);
                     scene.add(currentModel);
-                    document.getElementById('loader-ui').style.display = 'none';
+                    loadingUI.style.display = 'none';
                 });
             }
         }
-        loadSelectedAsset(); 
+        
+        loadSelectedAsset(); // Initial spawn
 
-        function toggleLogic() {
-            isLogicOn = !isLogicOn;
-            document.getElementById('logic-stat').innerText = isLogicOn ? "ON" : "OFF";
+        // --- 4. ENGINE LOGIC ---
+        function toggleRotate() {
+            isRotating = !isRotating;
+            document.getElementById('rot-stat').innerText = isRotating ? "ON" : "OFF";
         }
 
+        // Movement
         window.addEventListener('keydown', (e) => {
             if(!currentModel) return;
             const s = 0.2;
-            if(e.key.toLowerCase() === 'w') currentModel.position.z -= s;
-            if(e.key.toLowerCase() === 's') currentModel.position.z += s;
-            if(e.key.toLowerCase() === 'a') currentModel.position.x -= s;
-            if(e.key.toLowerCase() === 'd') currentModel.position.x += s;
+            const k = e.key.toLowerCase();
+            if(k === 'w') currentModel.position.z -= s;
+            if(k === 's') currentModel.position.z += s;
+            if(k === 'a') currentModel.position.x -= s;
+            if(k === 'd') currentModel.position.x += s;
         });
 
         function animate() {
             requestAnimationFrame(animate);
-            if(currentModel && isLogicOn) currentModel.rotation.y += 0.02;
+            if(currentModel && isRotating) {
+                currentModel.rotation.y += 0.02;
+            }
             renderer.render(scene, camera);
         }
         animate();
 
-        // SUPABASE KEYS (Fixed)
+        // --- 5. CLOUD CONNECTION ---
         const SUPABASE_URL = "https://fhqmmfhieowoplsiuiah.supabase.co";
         const SUPABASE_KEY = "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR68d0qoLwQyH6g_jIuzR"; 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function saveToCloud() {
             if(!currentModel) return;
-            const { error } = await _supabase.from('user_games').insert([{ game_state: {x: currentModel.position.x, z: currentModel.position.z} }]);
+            const { error } = await _supabase.from('user_games').insert([{ 
+                game_state: { x: currentModel.position.x, z: currentModel.position.z } 
+            }]);
+            
             if (error) alert("Error: " + error.message);
-            else alert("Cloud Saved! ☁️");
+            else alert("Duniya Save Ho Gayi! ☁️");
         }
+
+        // Window Resize
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
     </script>
 </body>
 </html>
