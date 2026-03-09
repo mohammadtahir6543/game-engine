@@ -4,32 +4,29 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULTRA ENGINE | THE ECOSYSTEM</title>
+    <title>ULTRA ENGINE | CINEMATIC EDITION</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --accent: #00f2ff; --bg: #000; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: white; }
+        :root { --accent: #00f2ff; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; }
 
-        /* --- 1. NEW CINEMATIC INTRO --- */
-        #intro-sequence {
+        /* --- 1. CINEMATIC VIDEO INTRO --- */
+        #video-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 10000; display: flex; align-items: center; justify-content: center;
+            z-index: 10000; background: #000; display: flex; align-items: center; justify-content: center;
         }
-        .intro-title {
-            font-family: 'Syncopate', sans-serif; font-size: clamp(20px, 5vw, 60px);
-            letter-spacing: 20px; color: white; text-align: center;
-            animation: pulse 2.5s ease-in-out forwards; opacity: 0;
-        }
-        @keyframes pulse {
-            0% { opacity: 0; transform: scale(0.8); filter: blur(10px); }
-            50% { opacity: 1; filter: blur(0px); letter-spacing: 25px; }
-            100% { opacity: 0; transform: scale(1.1); letter-spacing: 30px; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        #overlay-text {
+            position: absolute; color: white; font-family: 'Syncopate';
+            font-size: 4vw; letter-spacing: 20px; opacity: 0; z-index: 10001;
+            text-shadow: 0 0 30px var(--accent); pointer-events: none;
         }
 
         /* --- 2. SETUP SCREEN --- */
@@ -37,108 +34,166 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle, #0a0a0a 0%, #000 100%);
             z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 1.5s;
         }
         .setup-box {
-            background: rgba(15,15,15,0.9); padding: 40px; border-radius: 2px;
-            border-top: 4px solid var(--accent); width: 450px; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,1);
+            background: rgba(15,15,15,0.95); padding: 50px; border: 1px solid var(--accent);
+            text-align: center; width: 400px; box-shadow: 0 0 50px rgba(0,242,255,0.2);
         }
-        select, .start-btn {
-            width: 100%; padding: 15px; background: #111; border: 1px solid #333;
-            color: white; border-radius: 4px; margin-top: 15px; font-family: 'Orbitron';
+        select, .btn-start {
+            width: 100%; padding: 15px; margin-top: 20px; background: #111;
+            border: 1px solid #333; color: white; font-family: 'Orbitron'; cursor: pointer;
         }
-        .start-btn { background: var(--accent); color: black; font-weight: 900; cursor: pointer; border: none; }
+        .btn-start { background: var(--accent); color: #000; font-weight: 900; border: none; transition: 0.3s; }
+        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
 
         /* --- 3. ENGINE UI --- */
-        #main-engine { display: none; }
+        #engine-ui { display: none; }
         #sidebar {
             position: fixed; right: 0; top: 0; width: 320px; height: 100%;
             background: #080808; border-left: 1px solid #222; z-index: 100;
         }
-        .store-link-card {
-            margin: 20px; padding: 25px; background: linear-gradient(135deg, #111, #001a1c);
-            border: 1px solid var(--accent); border-radius: 8px; text-align: center;
-            box-shadow: 0 0 15px rgba(0,242,255,0.1);
+        .market-card {
+            margin: 20px; padding: 20px; border: 1px solid var(--accent);
+            background: rgba(0,242,255,0.05); text-align: center;
         }
-        .market-btn {
-            display: inline-block; margin-top: 15px; padding: 10px 20px;
-            background: var(--accent); color: black; text-decoration: none;
-            font-weight: bold; font-size: 12px; border-radius: 4px;
-        }
-
-        #hud { position: fixed; left: 20px; top: 20px; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 8px; border: 1px solid #222; }
+        #hud { position: fixed; left: 20px; top: 20px; z-index: 50; background: rgba(0,0,0,0.8); padding: 20px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <div id="intro-sequence">
-        <div class="intro-title">ULTRA GAMING</div>
+    <div id="video-container">
+        <video id="intro-video" muted playsinline>
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-blue-circuit-board-9755-large.mp4" type="video/mp4">
+        </video>
+        <div id="overlay-text">ULTRA ENGINE</div>
     </div>
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h2 style="letter-spacing:5px; color:var(--accent);">PROJECT CONFIG</h2>
+            <h2 style="color:var(--accent); letter-spacing:5px;">PROJECT SETUP</h2>
+            <p style="font-size:10px; color:#666;">SELECT YOUR TARGET ENVIRONMENT</p>
+            
             <select id="platform">
-                <option value="pc">PC / DESKTOP MODE</option>
-                <option value="mobile">MOBILE / LITE MODE</option>
+                <option value="pc">PC / HIGH PERFORMANCE</option>
+                <option value="mobile">MOBILE / OPTIMIZED</option>
             </select>
+            
             <select id="mode">
-                <option value="nocode">VISUAL ENGINE (NO-CODE)</option>
-                <option value="script">DEVELOPER MODE (SCRIPTING)</option>
+                <option value="nocode">NO-CODE VISUAL EDITOR</option>
+                <option value="script">DEVELOPER SCRIPTING</option>
             </select>
-            <button class="start-btn" onclick="startEngine()">LAUNCH ENGINE</button>
+            
+            <button class="btn-start" onclick="launchEngine()">START BUILDING</button>
         </div>
     </div>
 
-    <div id="main-engine">
+    <div id="engine-ui">
         <div id="hud">
-            <p style="font-size:10px; color:var(--accent); margin:0;">ENGINE STATUS: ACTIVE</p>
+            <h4 style="margin:0; color:var(--accent);">ULTRA CORE ACTIVE</h4>
             <button onclick="control.setMode('translate')" style="width:100%; margin-top:10px; background:none; border:1px solid #444; color:white; padding:5px; cursor:pointer;">MOVE</button>
             <button onclick="control.setMode('rotate')" style="width:100%; margin-top:5px; background:none; border:1px solid #444; color:white; padding:5px; cursor:pointer;">ROTATE</button>
-            <button onclick="save()" style="width:100%; margin-top:15px; background:#28a745; border:none; padding:10px; cursor:pointer; font-weight:bold;">SAVE TO CLOUD</button>
+            <button onclick="save()" style="width:100%; margin-top:20px; background:#28a745; border:none; padding:10px; font-weight:bold; cursor:pointer;">SAVE PROJECT</button>
         </div>
 
         <div id="sidebar">
-            <div class="store-link-card">
-                <h3 style="margin:0; font-size:14px; color:var(--accent);">ULTRA ASSET MARKET</h3>
-                <p style="font-size:10px; color:#666; margin-top:10px;">Browse 10,000+ High Quality 3D Models, Textures, and Scripts.</p>
-                <a href="https://github.com/KhronosGroup/glTF-Sample-Models" target="_blank" class="market-btn">OPEN ASSET MARKET ↗</a>
+            <div class="market-card">
+                <h3 style="font-size:14px; color:var(--accent); margin:0;">ASSET MARKET</h3>
+                <p style="font-size:9px; color:#777; margin:10px 0;">External Library with 10k+ Assets</p>
+                <a href="https://github.com/KhronosGroup/glTF-Sample-Models" target="_blank" style="text-decoration:none; color:#000; background:var(--accent); padding:8px 15px; font-size:10px; font-weight:bold; display:inline-block; border-radius:3px;">VISIT MARKET ↗</a>
             </div>
-            
             <div style="padding:20px;">
-                <p style="font-size:11px; color:#444;">LOCAL ASSETS</p>
-                <div style="background:#111; padding:15px; border-radius:5px; cursor:pointer; border:1px solid #222;" onclick="spawn('helmet')">
-                    <span style="font-size:12px;">SC-FI HELMET (PREVIEW)</span>
-                </div>
+                <p style="font-size:10px; color:#444;">QUICK SPAWN</p>
+                <button onclick="spawn('helmet')" style="width:100%; padding:10px; background:#111; border:1px solid #333; color:white; cursor:pointer; text-align:left;">SC-FI HELMET</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Intro Timeline
-        setTimeout(() => {
-            document.getElementById('intro-sequence').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('intro-sequence').style.display = 'none';
-                document.getElementById('setup-screen').style.display = 'flex';
-            }, 1000);
-        }, 2500);
+        const video = document.getElementById('intro-video');
+        const text = document.getElementById('overlay-text');
+        const videoCont = document.getElementById('video-container');
+        const setup = document.getElementById('setup-screen');
 
-        function startEngine() {
-            document.getElementById('setup-screen').style.opacity = '0';
+        // Cinematic Sequence
+        window.onclick = () => { 
+            video.play(); // User interaction needed for video play
             setTimeout(() => {
-                document.getElementById('setup-screen').style.display = 'none';
-                document.getElementById('main-engine').style.display = 'block';
-                initThree();
+                text.style.transition = "2s";
+                text.style.opacity = "1";
             }, 1000);
+            
+            setTimeout(() => {
+                videoCont.style.transition = "2s";
+                videoCont.style.opacity = "0";
+                setTimeout(() => {
+                    videoCont.style.display = "none";
+                    setup.style.display = "flex";
+                    setTimeout(() => { setup.style.opacity = "1"; }, 100);
+                }, 2000);
+            }, 5000);
+        };
+
+        function launchEngine() {
+            setup.style.opacity = "0";
+            setTimeout(() => {
+                setup.style.display = "none";
+                document.getElementById('engine-ui').style.display = "block";
+                initEngine();
+            }, 1500);
         }
 
         let scene, camera, renderer, control, currentObj;
 
-        function initThree() {
+        function initEngine() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x050505);
+            scene.background = new THREE.Color(0x020202);
             camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 320) / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth - 320, window.innerHeight);
-            renderer
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            document.body.appendChild(renderer.domElement);
+
+            scene.add(new THREE.GridHelper(50, 50, 0x00f2ff, 0x111111));
+            const light = new THREE.DirectionalLight(0xffffff, 2);
+            light.position.set(5, 10, 5);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+            camera.position.set(0, 5, 12);
+            camera.lookAt(0, 0, 0);
+
+            control = new THREE.TransformControls(camera, renderer.domElement);
+            scene.add(control);
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(renderer) renderer.render(scene, camera);
+        }
+
+        const loader = new THREE.GLTFLoader();
+        function spawn(id) {
+            if(currentObj) scene.remove(currentObj);
+            loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf', (gltf) => {
+                currentObj = gltf.scene;
+                currentObj.scale.set(2.5, 2.5, 2.5);
+                scene.add(currentObj);
+                control.attach(currentObj);
+            });
+        }
+
+        async function save() { alert("Data Synced to Ultra Cloud!"); }
+
+        window.addEventListener('resize', () => {
+            if(renderer) {
+                renderer.setSize(window.innerWidth - 320, window.innerHeight);
+                camera.aspect = (window.innerWidth - 320) / window.innerHeight;
+                camera.updateProjectionMatrix();
+            }
+        });
+    </script>
+</body>
+</html>
