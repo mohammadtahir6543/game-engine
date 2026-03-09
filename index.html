@@ -4,211 +4,141 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULTRA GAMING ENGINE | PROFESSIONAL SUITE</title>
+    <title>ULTRA ENGINE | THE ECOSYSTEM</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --accent: #00adb5; --bg: #050505; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
+        :root { --accent: #00f2ff; --bg: #000; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: white; }
 
-        /* --- 1. SETUP SCREEN --- */
+        /* --- 1. NEW CINEMATIC INTRO --- */
+        #intro-sequence {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 10000; display: flex; align-items: center; justify-content: center;
+        }
+        .intro-title {
+            font-family: 'Syncopate', sans-serif; font-size: clamp(20px, 5vw, 60px);
+            letter-spacing: 20px; color: white; text-align: center;
+            animation: pulse 2.5s ease-in-out forwards; opacity: 0;
+        }
+        @keyframes pulse {
+            0% { opacity: 0; transform: scale(0.8); filter: blur(10px); }
+            50% { opacity: 1; filter: blur(0px); letter-spacing: 25px; }
+            100% { opacity: 0; transform: scale(1.1); letter-spacing: 30px; }
+        }
+
+        /* --- 2. SETUP SCREEN --- */
         #setup-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #111 0%, #000 100%);
-            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle, #0a0a0a 0%, #000 100%);
+            z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
         }
         .setup-box {
-            background: rgba(20,20,20,0.95); padding: 40px; border-radius: 20px;
-            border: 1px solid var(--accent); width: 400px; text-align: center;
-            box-shadow: 0 0 50px rgba(0,173,181,0.2);
+            background: rgba(15,15,15,0.9); padding: 40px; border-radius: 2px;
+            border-top: 4px solid var(--accent); width: 450px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,1);
         }
-        .setup-box h1 { color: var(--accent); letter-spacing: 5px; font-size: 22px; margin-bottom: 30px; }
-        .setup-group { margin-bottom: 25px; text-align: left; }
-        .setup-group label { display: block; font-size: 10px; color: #666; letter-spacing: 2px; margin-bottom: 8px; }
-        select {
-            width: 100%; padding: 12px; background: #111; border: 1px solid #333;
-            color: white; border-radius: 6px; cursor: pointer; font-weight: bold;
+        select, .start-btn {
+            width: 100%; padding: 15px; background: #111; border: 1px solid #333;
+            color: white; border-radius: 4px; margin-top: 15px; font-family: 'Orbitron';
         }
-        .start-btn {
-            width: 100%; padding: 15px; background: var(--accent); border: none;
-            color: black; font-weight: 900; letter-spacing: 2px; border-radius: 8px;
-            cursor: pointer; transition: 0.3s; margin-top: 10px;
-        }
-        .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
+        .start-btn { background: var(--accent); color: black; font-weight: 900; cursor: pointer; border: none; }
 
-        /* --- 2. ENGINE UI --- */
-        #main-engine { display: none; opacity: 0; transition: 2s; }
+        /* --- 3. ENGINE UI --- */
+        #main-engine { display: none; }
         #sidebar {
-            position: fixed; right: 0; top: 0; width: 300px; height: 100%;
-            background: rgba(10,10,10,0.98); border-left: 1px solid var(--accent);
-            z-index: 100; display: flex; flex-direction: column;
+            position: fixed; right: 0; top: 0; width: 320px; height: 100%;
+            background: #080808; border-left: 1px solid #222; z-index: 100;
         }
-        .header { padding: 25px; text-align: center; border-bottom: 1px solid #222; color: var(--accent); font-weight: bold; font-size: 14px; letter-spacing: 2px; }
-        .grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; }
-        .card { background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid #333; }
-        .card:hover { border-color: var(--accent); background: #222; }
-        .card img { width: 100%; border-radius: 4px; margin-bottom: 5px; }
+        .store-link-card {
+            margin: 20px; padding: 25px; background: linear-gradient(135deg, #111, #001a1c);
+            border: 1px solid var(--accent); border-radius: 8px; text-align: center;
+            box-shadow: 0 0 15px rgba(0,242,255,0.1);
+        }
+        .market-btn {
+            display: inline-block; margin-top: 15px; padding: 10px 20px;
+            background: var(--accent); color: black; text-decoration: none;
+            font-weight: bold; font-size: 12px; border-radius: 4px;
+        }
 
-        #hud { position: fixed; left: 20px; top: 20px; z-index: 90; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 12px; border: 1px solid #333; width: 220px; }
-        .btn { width: 100%; padding: 10px; margin-bottom: 8px; cursor: pointer; background: #111; border: 1px solid var(--accent); color: white; border-radius: 5px; font-size: 10px; font-weight: bold; }
-        .btn:hover { background: var(--accent); color: black; }
+        #hud { position: fixed; left: 20px; top: 20px; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 8px; border: 1px solid #222; }
     </style>
 </head>
 <body>
 
+    <div id="intro-sequence">
+        <div class="intro-title">ULTRA GAMING</div>
+    </div>
+
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>ULTRA ENGINE</h1>
-            <div class="setup-group">
-                <label>TARGET PLATFORM</label>
-                <select id="platform">
-                    <option value="pc">PC / HIGH GRAPHICS</option>
-                    <option value="mobile">MOBILE / OPTIMIZED</option>
-                </select>
-            </div>
-            <div class="setup-group">
-                <label>ENGINE MODE</label>
-                <select id="mode">
-                    <option value="nocode">NO-CODE (VISUAL EDITOR)</option>
-                    <option value="script">SCRIPTING (JS/PYTHON)</option>
-                </select>
-            </div>
-            <button class="start-btn" onclick="initializeEngine()">INITIALIZE PROJECT</button>
+            <h2 style="letter-spacing:5px; color:var(--accent);">PROJECT CONFIG</h2>
+            <select id="platform">
+                <option value="pc">PC / DESKTOP MODE</option>
+                <option value="mobile">MOBILE / LITE MODE</option>
+            </select>
+            <select id="mode">
+                <option value="nocode">VISUAL ENGINE (NO-CODE)</option>
+                <option value="script">DEVELOPER MODE (SCRIPTING)</option>
+            </select>
+            <button class="start-btn" onclick="startEngine()">LAUNCH ENGINE</button>
         </div>
     </div>
 
     <div id="main-engine">
         <div id="hud">
-            <h3 style="margin:0 0 15px 0; font-size:11px; color:var(--accent); letter-spacing:2px;">ULTRA CORE v5.0</h3>
-            <button class="btn" onclick="control.setMode('translate')">MOVE (W)</button>
-            <button class="btn" onclick="control.setMode('rotate')">ROTATE (E)</button>
-            <button class="btn" onclick="control.setMode('scale')">SCALE (R)</button>
-            <button class="btn" style="background:#28a745; border:none;" onclick="save()">SYNC TO CLOUD</button>
-            <div id="stats" style="font-size:9px; color:#555; margin-top:10px;"></div>
+            <p style="font-size:10px; color:var(--accent); margin:0;">ENGINE STATUS: ACTIVE</p>
+            <button onclick="control.setMode('translate')" style="width:100%; margin-top:10px; background:none; border:1px solid #444; color:white; padding:5px; cursor:pointer;">MOVE</button>
+            <button onclick="control.setMode('rotate')" style="width:100%; margin-top:5px; background:none; border:1px solid #444; color:white; padding:5px; cursor:pointer;">ROTATE</button>
+            <button onclick="save()" style="width:100%; margin-top:15px; background:#28a745; border:none; padding:10px; cursor:pointer; font-weight:bold;">SAVE TO CLOUD</button>
         </div>
 
         <div id="sidebar">
-            <div class="header">ASSET STORE</div>
-            <div class="grid">
-                <div class="card" onclick="spawn('helmet')">
-                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/screenshot/screenshot.png">
-                    <span>HELMET</span>
-                </div>
-                <div class="card" onclick="spawn('duck')">
-                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/screenshot/screenshot.png">
-                    <span>DUCK</span>
-                </div>
-                <div class="card" onclick="spawn('robot')">
-                    <img src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/screenshot/screenshot.png">
-                    <span>ROBOT</span>
-                </div>
-                <div class="card" onclick="spawn('box')">
-                    <div style="height:60px; background:var(--accent); border-radius:4px; margin-bottom:5px;"></div>
-                    <span>DEV CUBE</span>
+            <div class="store-link-card">
+                <h3 style="margin:0; font-size:14px; color:var(--accent);">ULTRA ASSET MARKET</h3>
+                <p style="font-size:10px; color:#666; margin-top:10px;">Browse 10,000+ High Quality 3D Models, Textures, and Scripts.</p>
+                <a href="https://github.com/KhronosGroup/glTF-Sample-Models" target="_blank" class="market-btn">OPEN ASSET MARKET ↗</a>
+            </div>
+            
+            <div style="padding:20px;">
+                <p style="font-size:11px; color:#444;">LOCAL ASSETS</p>
+                <div style="background:#111; padding:15px; border-radius:5px; cursor:pointer; border:1px solid #222;" onclick="spawn('helmet')">
+                    <span style="font-size:12px;">SC-FI HELMET (PREVIEW)</span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let platform, mode;
+        // Intro Timeline
+        setTimeout(() => {
+            document.getElementById('intro-sequence').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('intro-sequence').style.display = 'none';
+                document.getElementById('setup-screen').style.display = 'flex';
+            }, 1000);
+        }, 2500);
 
-        function initializeEngine() {
-            platform = document.getElementById('platform').value;
-            mode = document.getElementById('mode').value;
-
-            document.getElementById('setup-screen').style.transition = '2s';
+        function startEngine() {
             document.getElementById('setup-screen').style.opacity = '0';
-            
             setTimeout(() => {
                 document.getElementById('setup-screen').style.display = 'none';
                 document.getElementById('main-engine').style.display = 'block';
-                setTimeout(() => { document.getElementById('main-engine').style.opacity = '1'; }, 100);
-                
-                // Show choice in console/HUD
-                document.getElementById('stats').innerText = `PLATFORM: ${platform.toUpperCase()}\nMODE: ${mode.toUpperCase()}`;
-                
-                // Adjust graphics based on choice
-                if(platform === 'mobile') {
-                    renderer.setPixelRatio(1); // Low graphics for mobile
-                }
-            }, 1500);
+                initThree();
+            }, 1000);
         }
 
-        // --- ENGINE CORE ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x020202);
-        const camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 300) / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth - 300, window.innerHeight);
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        document.body.appendChild(renderer.domElement);
+        let scene, camera, renderer, control, currentObj;
 
-        scene.add(new THREE.GridHelper(50, 50, 0x00adb5, 0x222222));
-        const light = new THREE.DirectionalLight(0xffffff, 2);
-        light.position.set(5, 10, 5);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
-        camera.position.set(0, 5, 10);
-        camera.lookAt(0, 0, 0);
-
-        const control = new THREE.TransformControls(camera, renderer.domElement);
-        scene.add(control);
-
-        let currentObj;
-        const loader = new THREE.GLTFLoader();
-
-        const assets = {
-            helmet: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf',
-            duck: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf',
-            robot: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BrainStem/glTF/BrainStem.gltf'
-        };
-
-        function spawn(id) {
-            if(currentObj) scene.remove(currentObj);
-            if(id === 'box') {
-                const geo = new THREE.BoxGeometry(2, 2, 2);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x00adb5, metalness: 0.5, roughness: 0.1 });
-                currentObj = new THREE.Mesh(geo, mat);
-                currentObj.position.y = 1;
-                scene.add(currentObj);
-                control.attach(currentObj);
-            } else {
-                loader.load(assets[id] + "?v=" + Math.random(), (gltf) => {
-                    currentObj = gltf.scene;
-                    currentObj.scale.set(2, 2, 2);
-                    currentObj.position.y = 1;
-                    scene.add(currentObj);
-                    control.attach(currentObj);
-                });
-            }
-        }
-        spawn('box');
-
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // Supabase Save
-        const _sb = supabase.createClient("https://fhqmmfhieowoplsiuiah.supabase.co", "sb_publishable_0nvjZi6vah6d0qoLwQyH6g_jIuzR68d0qoLwQyH6g_jIuzR");
-        async function save() {
-            if(!currentObj) return;
-            const { error } = await _sb.from('user_games').insert([{ game_state: {x: currentObj.position.x, y: currentObj.position.y, z: currentObj.position.z} }]);
-            alert(error ? "Sync Fail!" : "Project Saved! ☁️");
-        }
-
-        window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth - 300, window.innerHeight);
-            camera.aspect = (window.innerWidth - 300) / window.innerHeight;
-            camera.updateProjectionMatrix();
-        });
-    </script>
-</body>
-</html>
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050505);
+            camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 320) / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth - 320, window.innerHeight);
+            renderer
